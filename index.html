@@ -2,399 +2,347 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <title>חיבורי מילים</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: #f9f7f0;
-      color: #1a1a1a;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
+    html, body {
+      height: 100%;
+      background: #0f0f13;
+      color: #f0f0f8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 16px;
     }
 
-    h1 {
-      font-size: 2rem;
-      font-weight: 800;
-      letter-spacing: 1px;
-      margin-bottom: 4px;
+    .page {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 20px 14px 40px;
     }
 
-    .subtitle {
-      color: #666;
-      font-size: 0.95rem;
-      margin-bottom: 20px;
-    }
+    /* HEADER */
+    .header { text-align: center; margin-bottom: 6px; }
+    .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .header p  { font-size: 13px; color: #8888aa; margin-top: 4px; }
 
-    .instructions {
-      font-size: 0.9rem;
-      color: #444;
-      margin-bottom: 18px;
-      text-align: center;
-    }
-
-    /* Solved groups */
-    .solved-groups {
-      width: 100%;
-      max-width: 500px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
+    /* SOLVED GROUPS */
+    .solved-groups { margin-bottom: 8px; }
     .solved-card {
       border-radius: 10px;
-      padding: 14px 18px;
+      padding: 11px 16px;
+      margin-bottom: 6px;
       text-align: center;
-      animation: popIn 0.35s ease;
+      animation: slideIn 0.35s ease;
     }
+    .solved-card .cat  { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+    .solved-card .wrds { font-size: 15px; font-weight: 700; }
 
-    .solved-card .cat-name {
-      font-weight: 800;
-      font-size: 1rem;
-      margin-bottom: 4px;
-    }
-
-    .solved-card .cat-words {
-      font-size: 0.9rem;
-      opacity: 0.85;
-    }
-
-    /* Grid */
+    /* GRID */
     .grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
-      width: 100%;
-      max-width: 500px;
-      margin-bottom: 18px;
+      gap: 7px;
+      margin-bottom: 12px;
     }
-
     .tile {
-      background: #efece4;
-      border: none;
+      background: #222232;
+      border: 1.5px solid #2e2e42;
       border-radius: 10px;
-      padding: 0;
-      height: 72px;
-      font-size: 1rem;
+      color: #f0f0f8;
+      font-size: 14px;
       font-weight: 700;
+      height: 66px;
       cursor: pointer;
-      transition: background 0.15s, transform 0.1s;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
-      user-select: none;
+      padding: 4px;
       font-family: inherit;
+      line-height: 1.25;
+      transition: background 0.12s, border-color 0.12s, transform 0.12s;
+      user-select: none;
     }
+    .tile:active  { transform: scale(0.93); }
+    .tile.sel     { background: #f0f0f8; color: #0f0f13; border-color: #f0f0f8; transform: scale(1.04); }
+    .tile.shake   { animation: shake 0.45s ease; }
 
-    .tile:hover:not(.selected) { background: #ddd9cc; }
-
-    .tile.selected {
-      background: #5a5a5a;
-      color: #fff;
-      transform: scale(0.97);
-    }
-
-    .tile.shake {
-      animation: shake 0.4s ease;
-    }
-
-    /* Controls */
+    /* CONTROLS */
     .controls {
       display: flex;
-      gap: 12px;
-      margin-bottom: 20px;
+      gap: 7px;
+      justify-content: center;
+      margin-bottom: 14px;
     }
-
-    button.ctrl {
-      padding: 12px 28px;
-      border-radius: 30px;
-      border: 2px solid #1a1a1a;
-      background: transparent;
-      font-size: 1rem;
+    .btn {
+      background: none;
+      border: 1.5px solid #2e2e42;
+      border-radius: 20px;
+      color: #8888aa;
+      font-size: 12px;
       font-weight: 700;
       cursor: pointer;
+      padding: 7px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
       font-family: inherit;
-      transition: background 0.15s, color 0.15s;
+      transition: border-color 0.15s, color 0.15s;
     }
+    .btn:hover:not(:disabled) { border-color: #8888aa; }
+    .btn:disabled { opacity: 0.28; cursor: not-allowed; }
+    .btn .ico { font-size: 16px; }
+    .btn.submit { border-color: #6c63ff; color: #6c63ff; }
+    .btn.submit:disabled { border-color: #2e2e42; color: #8888aa; }
 
-    button.ctrl:hover { background: #1a1a1a; color: #fff; }
-    button.ctrl:disabled { opacity: 0.35; cursor: default; }
-    button.ctrl:disabled:hover { background: transparent; color: #1a1a1a; }
-
-    button.ctrl.submit {
-      background: #1a1a1a;
-      color: #fff;
-    }
-    button.ctrl.submit:hover { background: #444; border-color: #444; }
-    button.ctrl.submit:disabled { background: transparent; color: #1a1a1a; }
-
-    /* Lives */
+    /* LIVES */
     .lives-row {
       display: flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 16px;
-      font-size: 0.95rem;
-    }
-
-    .dot {
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      background: #5a5a5a;
-      display: inline-block;
-      transition: background 0.2s;
-    }
-
-    .dot.lost { background: #e0ddd5; }
-
-    /* Message */
-    .message {
-      height: 28px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #333;
-      text-align: center;
-      transition: opacity 0.3s;
-    }
-
-    /* Modal (win/lose) */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.45);
       justify-content: center;
-      align-items: center;
-      z-index: 100;
+      margin-bottom: 4px;
     }
+    .lives-lbl { font-size: 13px; font-weight: 700; color: #8888aa; }
+    .dot {
+      width: 13px; height: 13px;
+      border-radius: 50%;
+      background: #f0f0f8;
+      display: inline-block;
+      transition: all 0.25s;
+    }
+    .dot.lost { background: #3a3a4a; }
 
-    .modal-overlay.show { display: flex; }
-
-    .modal {
-      background: #fff;
-      border-radius: 16px;
-      padding: 36px 32px;
-      max-width: 340px;
-      width: 90%;
+    /* GAME-OVER SCREEN */
+    .gameover {
       text-align: center;
-      animation: popIn 0.3s ease;
+      padding: 16px 8px;
+      animation: slideIn 0.3s ease;
     }
-
-    .modal h2 { font-size: 1.6rem; margin-bottom: 10px; }
-    .modal p { color: #555; margin-bottom: 20px; }
-
-    .modal button {
-      padding: 12px 32px;
-      border-radius: 30px;
-      border: none;
-      background: #1a1a1a;
-      color: #fff;
-      font-size: 1rem;
+    .gameover .emoji { font-size: 52px; margin-bottom: 10px; }
+    .gameover h2    { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+    .gameover p     { color: #8888aa; font-size: 14px; margin-bottom: 14px; }
+    .gameover .missed { margin-bottom: 14px; }
+    .replay-btn {
+      background: none;
+      border: 1.5px solid #2e2e42;
+      border-radius: 12px;
+      color: #f0f0f8;
+      font-size: 15px;
       font-weight: 700;
+      padding: 12px 28px;
       cursor: pointer;
       font-family: inherit;
+      transition: border-color 0.15s;
     }
+    .replay-btn:hover { border-color: #8888aa; }
 
-    /* Color themes */
-    .y { background: #f9df6d; }
-    .g { background: #a0c35a; }
-    .b { background: #b0c4ef; }
-    .p { background: #ba81c5; }
-
-    /* Animations */
-    @keyframes popIn {
-      from { transform: scale(0.85); opacity: 0; }
-      to   { transform: scale(1);    opacity: 1; }
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(12px);
+      background: rgba(20,20,30,0.97);
+      border: 1px solid #2e2e42;
+      color: #f0f0f8;
+      padding: 10px 20px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0;
+      transition: all 0.25s;
+      z-index: 600;
+      text-align: center;
+      max-width: 86vw;
+      pointer-events: none;
     }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+    /* COLOR THEMES */
+    .y { background: #f5c518; color: #1a1200; }
+    .g { background: #7ec87e; color: #071507; }
+    .b { background: #6fa8dc; color: #05101e; }
+    .p { background: #c084e0; color: #180028; }
+
+    /* ANIMATIONS */
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
     @keyframes shake {
       0%,100% { transform: translateX(0); }
-      20%     { transform: translateX(-6px); }
-      40%     { transform: translateX(6px); }
+      20%     { transform: translateX(-7px); }
+      40%     { transform: translateX(7px); }
       60%     { transform: translateX(-4px); }
       80%     { transform: translateX(4px); }
     }
 
-    @media (max-width: 420px) {
-      .tile { height: 62px; font-size: 0.88rem; }
-      h1 { font-size: 1.6rem; }
+    @media (max-width: 380px) {
+      .tile { height: 58px; font-size: 12px; }
     }
   </style>
 </head>
 <body>
-
-<h1>חיבורי מילים</h1>
-<p class="subtitle">מצא ארבע קבוצות של ארבע מילים</p>
-<p class="instructions">בחר ארבע מילים שיש ביניהן קשר ולחץ "שלח"</p>
-
-<div class="solved-groups" id="solved-groups"></div>
-
-<div class="grid" id="grid"></div>
-
-<div class="lives-row">
-  <span>טעויות שנותרו:</span>
-  <span id="dots"></span>
-</div>
-
-<div class="controls">
-  <button class="ctrl" id="btn-shuffle" onclick="shuffle()">ערבב</button>
-  <button class="ctrl" id="btn-clear" onclick="clearSel()" disabled>נקה</button>
-  <button class="ctrl submit" id="btn-submit" onclick="submit()" disabled>שלח</button>
-</div>
-
-<div class="message" id="message"></div>
-
-<!-- Win/Lose Modal -->
-<div class="modal-overlay" id="modal-overlay">
-  <div class="modal">
-    <h2 id="modal-title"></h2>
-    <p id="modal-body"></p>
-    <button onclick="newGame()">משחק חדש</button>
+<div class="page">
+  <div class="header">
+    <h1>חיבורי מילים</h1>
+    <p>מצא ארבע קבוצות של ארבע מילים</p>
   </div>
+
+  <div class="solved-groups" id="solved"></div>
+  <div class="grid"         id="grid"></div>
+
+  <div class="controls" id="controls">
+    <button class="btn"        id="btn-shuffle" onclick="doShuffle()"><span class="ico">🔀</span>ערבב</button>
+    <button class="btn"        id="btn-hint"    onclick="doHint()">  <span class="ico">💡</span>רמז</button>
+    <button class="btn"        id="btn-clear"   onclick="doClear()"> <span class="ico">↺</span>נקה</button>
+    <button class="btn submit" id="btn-submit"  onclick="doSubmit()"><span class="ico">✓</span>שלח</button>
+  </div>
+
+  <div class="lives-row" id="lives-row"></div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════
-//  PUZZLE BANK  (add more puzzles freely!)
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+//  PUZZLES
+// ══════════════════════════════════════════════════════════
 const PUZZLES = [
   {
-    title: "חיות, פירות, ירקות וצבעים",
     groups: [
-      { name: "פירות", words: ["תפוח", "בננה", "מנגו", "ענב"],            color: "y" },
-      { name: "ירקות", words: ["גזר", "מלפפון", "עגבנייה", "חסה"],        color: "g" },
-      { name: "חיות בית", words: ["כלב", "חתול", "ארנב", "תוכי"],         color: "b" },
-      { name: "צבעים",   words: ["אדום", "כחול", "ירוק", "צהוב"],         color: "p" },
+      { label: 'שמות אותיות עבריות שהן גם מילים', words: ['עין','פה','בית','דלת'],               color:'y' },
+      { label: 'חלקי פנים — לא עין ופה',          words: ['אוזן','אף','לחי','מצח'],             color:'g' },
+      { label: '"בית ___"',                        words: ['ספר','חולים','כנסת','קפה'],          color:'b' },
+      { label: 'פירושן "למשוך"',                  words: ['משך','שלף','גרר','סחב'],             color:'p' },
     ]
   },
   {
-    title: "זמן, מוסיקה, ספורט ועונות",
     groups: [
-      { name: "עונות השנה",    words: ["אביב", "קיץ", "סתיו", "חורף"],              color: "y" },
-      { name: "כלי נגינה",    words: ["גיטרה", "פסנתר", "כינור", "חליל"],          color: "g" },
-      { name: "ענפי ספורט",   words: ["כדורגל", "כדורסל", "טניס", "שחייה"],        color: "b" },
-      { name: "ימי השבוע",    words: ["ראשון", "שני", "שלישי", "רביעי"],           color: "p" },
+      { label: '"ים ___"',                         words: ['כינרת','מת','סוף','תיכון'],          color:'y' },
+      { label: '"ראש ___"',                        words: ['ממשלה','עיר','מועצה','מדינה'],       color:'g' },
+      { label: 'דברים שרותחים — גם בהשאלה',       words: ['מים','דם','תשוקה','כעס'],            color:'b' },
+      { label: '"קרית ___" — ישובים',             words: ['שמונה','גת','ביאליק','ענבים'],       color:'p' },
     ]
   },
   {
-    title: "בגדים, רגשות, מקצועות ומטבח",
     groups: [
-      { name: "פריטי לבוש",   words: ["חולצה", "מכנסיים", "שמלה", "כובע"],         color: "y" },
-      { name: "כלי אוכל",     words: ["סכין", "מזלג", "כף", "צלחת"],               color: "g" },
-      { name: "מקצועות",      words: ["רופא", "מורה", "שופט", "מהנדס"],            color: "b" },
-      { name: "רגשות",        words: ["שמחה", "עצבות", "כעס", "פחד"],              color: "p" },
+      { label: 'ספורט מים',                        words: ['גלישה','שחייה','צלילה','חתירה'],     color:'y' },
+      { label: 'מה אפשר לאמן',                     words: ['שריר','כלב','ילד','מיומנות'],        color:'g' },
+      { label: 'דברים שיכולים להיות גבוה ונמוך',  words: ['לחץ','מתח','קול','ציון'],            color:'b' },
+      { label: '"כוח ___"',                        words: ['אדם','קנייה','רצון','משיכה'],        color:'p' },
     ]
   },
   {
-    title: "גוף, מזג אוויר, תחבורה וריהוט",
     groups: [
-      { name: "חלקי גוף",     words: ["ראש", "יד", "רגל", "עין"],                  color: "y" },
-      { name: "מזג אוויר",    words: ["גשם", "שלג", "רוח", "ברד"],                 color: "g" },
-      { name: "כלי תחבורה",   words: ["אוטובוס", "רכבת", "מטוס", "אונייה"],        color: "b" },
-      { name: "ריהוט",        words: ["כיסא", "שולחן", "מיטה", "ארון"],            color: "p" },
+      { label: 'מה אפשר לשבור',                   words: ['שיא','לב','שיניים','גל'],            color:'y' },
+      { label: 'חיות שמסמלות ערכים',              words: ['יונה','אריה','נחש','חמור'],          color:'g' },
+      { label: 'ערים ישראליות שמתחילות ב"נ"',     words: ['נתניה','נצרת','נהריה','נס ציונה'],  color:'b' },
+      { label: 'חודשים עבריים שמתחילים ב"א"',     words: ['אייר','אב','אלול','אדר'],            color:'p' },
     ]
   },
   {
-    title: "חגים, כוכבים, צורות ובישול",
     groups: [
-      { name: "חגים יהודיים", words: ["פסח", "שבועות", "סוכות", "חנוכה"],          color: "y" },
-      { name: "כוכבי לכת",   words: ["מאדים", "נוגה", "צדק", "שבתאי"],            color: "g" },
-      { name: "צורות גיאומטריות", words: ["עיגול", "משולש", "ריבוע", "מלבן"],     color: "b" },
-      { name: "שיטות בישול",  words: ["לבשל", "לאפות", "לטגן", "לצלות"],          color: "p" },
+      { label: '"___ ידיים"',                      words: ['שטיפת','הרמת','לחיצת','כפות'],      color:'y' },
+      { label: 'שמות עבריים שפירושם אור',          words: ['אורי','אורית','אורן','אורה'],        color:'g' },
+      { label: 'מה אפשר לקפל',                    words: ['חולצה','מפה','נייר','שמיכה'],        color:'b' },
+      { label: 'מה יכול להיות חריף',              words: ['פלפל','שכל','לשון','מבט'],           color:'p' },
     ]
   },
   {
-    title: "מספרים, מדינות, ים ויער",
     groups: [
-      { name: "מספרים בעברית", words: ["אחת", "שתיים", "שלוש", "ארבע"],            color: "y" },
-      { name: "מדינות",        words: ["צרפת", "גרמניה", "יפן", "ברזיל"],           color: "g" },
-      { name: "בעלי חיים ימיים", words: ["כריש", "דולפין", "תמנון", "לוויתן"],     color: "b" },
-      { name: "עצי יער",       words: ["אלון", "ארז", "תדהר", "אשל"],              color: "p" },
+      { label: 'מה יכול לעלות ולרדת',             words: ['מחיר','לחץ','מצב רוח','טמפרטורה'], color:'y' },
+      { label: 'מה שנמס — גם בהשאלה',            words: ['שלג','שוקולד','כעס','קרח'],          color:'g' },
+      { label: 'מה יכול לפרוח',                   words: ['פרח','אהבה','קריירה','חלום'],        color:'b' },
+      { label: 'מה אפשר להדליק',                  words: ['נר','מדורה','מריבה','תקווה'],        color:'p' },
     ]
   },
   {
-    title: "אוכל ישראלי, חושים, כתיבה וכסף",
     groups: [
-      { name: "אוכל ישראלי",  words: ["פלאפל", "חומוס", "שקשוקה", "בורקס"],       color: "y" },
-      { name: "חמשת החושים",  words: ["ראייה", "שמיעה", "ריח", "טעם"],            color: "g" },
-      { name: "כלי כתיבה",    words: ["עיפרון", "עט", "מחק", "סרגל"],             color: "b" },
-      { name: "מטבעות עולמיים", words: ["דולר", "אירו", "ין", "פאונד"],            color: "p" },
+      { label: '"___ שמש"',                        words: ['זריחת','שקיעת','קרני','משקפי'],      color:'y' },
+      { label: 'מה אפשר לאבד',                    words: ['זיכרון','מפתח','קשר','זמן'],         color:'g' },
+      { label: 'מה יכול להיות "חם"',              words: ['לחם','לב','מזג','יחס'],              color:'b' },
+      { label: 'מה יכול להיסגר',                  words: ['חנות','ספר','חשבון','פצע'],          color:'p' },
     ]
   },
   {
-    title: "חינוך, טבע, ביגוד ורפואה",
     groups: [
-      { name: "חדרי בית ספר", words: ["כיתה", "ספרייה", "מזכירות", "חצר"],        color: "y" },
-      { name: "פרחים",        words: ["ורד", "נרקיס", "כלנית", "חרצית"],           color: "g" },
-      { name: "נעליים",       words: ["סניקרס", "סנדל", "מגף", "נעל עקב"],        color: "b" },
-      { name: "כלי רפואה",    words: ["מזרק", "תרמומטר", "אוזנייה", "תחבושת"],    color: "p" },
+      { label: 'מה אפשר לגלות',                   words: ['אמת','יבשת','כישרון','תשובה'],       color:'y' },
+      { label: 'מה שיכול לצמוח',                  words: ['עסק','שיניים','ידע','שיער'],         color:'g' },
+      { label: 'מה שיש לו שורשים',               words: ['עץ','משפחה','מסורת','מילה'],         color:'b' },
+      { label: 'מה יכול להיעלם',                  words: ['כאב','ענן','ספק','רמז'],             color:'p' },
     ]
   },
 ];
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 //  STATE
-// ══════════════════════════════════════════════
-let puzzle, tiles, selected, solved, lives, gameOver;
+// ══════════════════════════════════════════════════════════
+const MAX_LIVES = 4;
+let puzzle, tiles, selected, solved, lives, hintsLeft, gameOver;
 
 function newGame() {
-  hideModal();
-  puzzle   = PUZZLES[Math.floor(Math.random() * PUZZLES.length)];
-  tiles    = puzzle.groups.flatMap(g => g.words.map(w => ({ word: w, group: g })));
+  puzzle    = PUZZLES[Math.floor(Math.random() * PUZZLES.length)];
+  tiles     = puzzle.groups.flatMap((g, gi) => g.words.map(w => ({ word: w, gi })));
   shuffleArr(tiles);
-  selected = [];
-  solved   = [];
-  lives    = 4;
-  gameOver = false;
+  selected  = [];
+  solved    = [];
+  lives     = MAX_LIVES;
+  hintsLeft = 3;
+  gameOver  = false;
 
-  document.getElementById('solved-groups').innerHTML = '';
-  renderDots();
+  document.getElementById('solved').innerHTML = '';
+  document.getElementById('grid').style.display = 'grid';
+  document.getElementById('controls').style.display = 'flex';
   renderGrid();
-  setMessage('');
+  renderLives();
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 //  RENDER
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 function renderGrid() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
+
   tiles.forEach((t, i) => {
     const btn = document.createElement('button');
-    btn.className = 'tile' + (selected.includes(i) ? ' selected' : '');
+    btn.className = 'tile' + (selected.includes(i) ? ' sel' : '');
     btn.textContent = t.word;
-    btn.onclick = () => toggleTile(i);
+    btn.addEventListener('click', () => toggleTile(i));
     grid.appendChild(btn);
   });
-  updateButtons();
+
+  const nSel = selected.length;
+  document.getElementById('btn-clear').disabled  = nSel === 0;
+  document.getElementById('btn-submit').disabled = nSel !== 4;
+  document.getElementById('btn-hint').disabled   = hintsLeft <= 0 || gameOver;
 }
 
-function renderDots() {
-  const el = document.getElementById('dots');
-  el.innerHTML = '';
-  for (let i = 0; i < 4; i++) {
+function renderLives() {
+  const row = document.getElementById('lives-row');
+  row.innerHTML = `<span class="lives-lbl">ניסיונות:</span>`;
+  for (let i = 0; i < MAX_LIVES; i++) {
     const d = document.createElement('span');
     d.className = 'dot' + (i >= lives ? ' lost' : '');
-    el.appendChild(d);
+    row.appendChild(d);
   }
 }
 
-function updateButtons() {
-  document.getElementById('btn-clear').disabled  = selected.length === 0;
-  document.getElementById('btn-submit').disabled = selected.length !== 4;
+function addSolvedCard(group, faded) {
+  const card = document.createElement('div');
+  card.className = `solved-card ${group.color}`;
+  if (faded) card.style.opacity = '0.55';
+  card.innerHTML = `<div class="cat">${group.label}</div>
+                    <div class="wrds">${group.words.join(' · ')}</div>`;
+  document.getElementById('solved').appendChild(card);
 }
 
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 //  INTERACTIONS
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 function toggleTile(i) {
   if (gameOver) return;
   const idx = selected.indexOf(i);
@@ -404,117 +352,138 @@ function toggleTile(i) {
     selected.splice(idx, 1);
   }
   renderGrid();
-  setMessage('');
 }
 
-function clearSel() {
+function doClear() {
   selected = [];
   renderGrid();
 }
 
-function shuffle() {
+function doShuffle() {
   shuffleArr(tiles);
   selected = [];
   renderGrid();
 }
 
-function submit() {
+function doHint() {
+  if (hintsLeft <= 0 || gameOver) return;
+  const unsolvedGroups = puzzle.groups.filter((_, gi) => !solved.includes(gi));
+  if (!unsolvedGroups.length) return;
+  const g = unsolvedGroups[Math.floor(Math.random() * unsolvedGroups.length)];
+  hintsLeft--;
+  document.getElementById('btn-hint').textContent = '';
+  document.getElementById('btn-hint').innerHTML =
+    `<span class="ico">💡</span>רמז (${hintsLeft})`;
+  showToast(`רמז: ${g.label}`);
+  if (hintsLeft <= 0) document.getElementById('btn-hint').disabled = true;
+}
+
+function doSubmit() {
   if (selected.length !== 4 || gameOver) return;
 
-  const chosenGroups = selected.map(i => tiles[i].group);
-  const allSame = chosenGroups.every(g => g === chosenGroups[0]);
+  const giList = selected.map(i => tiles[i].gi);
+  const allSame = giList.every(gi => gi === giList[0]);
 
   if (allSame) {
-    // Correct!
-    const group = chosenGroups[0];
-    solved.push(group);
+    // ✅ Correct
+    const gi    = giList[0];
+    const group = puzzle.groups[gi];
+    solved.push(gi);
+    addSolvedCard(group, false);
 
-    // Remove solved tiles
     const wordsToRemove = new Set(selected.map(i => tiles[i].word));
-    tiles = tiles.filter(t => !wordsToRemove.has(t.word));
+    tiles    = tiles.filter(t => !wordsToRemove.has(t.word));
     selected = [];
-
-    // Add solved card
-    const card = document.createElement('div');
-    card.className = `solved-card ${group.color}`;
-    card.innerHTML = `<div class="cat-name">${group.name}</div>
-                      <div class="cat-words">${group.words.join(' · ')}</div>`;
-    document.getElementById('solved-groups').appendChild(card);
-
-    setMessage('');
     renderGrid();
-    renderDots();
+    renderLives();
 
-    if (solved.length === 4) {
-      setTimeout(() => showModal('🎉 כל הכבוד!', 'פתרת את כל הקבוצות!'), 400);
+    if (solved.length === puzzle.groups.length) {
+      setTimeout(() => showWin(), 350);
     }
   } else {
-    // Wrong
-    lives--;
-    renderDots();
-
-    // Check if one-away
-    const maxSame = Math.max(
-      ...puzzle.groups.map(g => selected.filter(i => tiles[i].group === g).length)
-    );
-    if (maxSame === 3) {
-      setMessage('כמעט! אחת מהמילים לא שייכת לאותה קבוצה');
-    } else {
-      setMessage('לא נכון, נסה שוב');
-    }
+    // ❌ Wrong
+    const oneAway = puzzle.groups.some((_, gi) => {
+      if (solved.includes(gi)) return false;
+      return selected.filter(i => tiles[i].gi === gi).length === 3;
+    });
 
     // Shake selected tiles
     const tileBtns = document.getElementById('grid').querySelectorAll('.tile');
     selected.forEach(i => {
-      const btn = tileBtns[i < tileBtns.length ? i : 0];
-      tileBtns.forEach((b, bi) => {
-        if (selected.includes(bi)) {
-          b.classList.add('shake');
-          setTimeout(() => b.classList.remove('shake'), 500);
-        }
-      });
+      if (tileBtns[i]) {
+        tileBtns[i].classList.add('shake');
+        setTimeout(() => tileBtns[i]?.classList.remove('shake'), 500);
+      }
     });
 
-    if (lives === 0) {
-      gameOver = true;
-      revealRemaining();
-      setTimeout(() => showModal('😞 אוהה...', 'נגמרו הניסיונות. נסה שוב!'), 600);
-    }
-
+    lives--;
     selected = [];
-    updateButtons();
+    renderLives();
+
+    if (oneAway) showToast('כמעט! רק מילה אחת מפרידה אותך 😅');
+    else         showToast('לא נכון, נסה שוב');
+
+    if (lives <= 0) {
+      gameOver = true;
+      setTimeout(() => showLose(), 650);
+    } else {
+      setTimeout(() => renderGrid(), 50);
+    }
   }
 }
 
-function revealRemaining() {
-  // Show all unsolved groups
-  puzzle.groups.filter(g => !solved.includes(g)).forEach(group => {
-    const card = document.createElement('div');
-    card.className = `solved-card ${group.color}`;
-    card.style.opacity = '0.65';
-    card.innerHTML = `<div class="cat-name">${group.name}</div>
-                      <div class="cat-words">${group.words.join(' · ')}</div>`;
-    document.getElementById('solved-groups').appendChild(card);
+// ══════════════════════════════════════════════════════════
+//  END SCREENS
+// ══════════════════════════════════════════════════════════
+function showWin() {
+  gameOver = true;
+  document.getElementById('grid').style.display     = 'none';
+  document.getElementById('controls').style.display = 'none';
+  document.getElementById('lives-row').innerHTML    = '';
+
+  const el = document.createElement('div');
+  el.className = 'gameover';
+  el.innerHTML = `<div class="emoji">🎉</div>
+    <h2>כל הכבוד!</h2>
+    <p>פתרת את כל הקבוצות!</p>
+    <button class="replay-btn" onclick="newGame()">משחק חדש</button>`;
+  document.querySelector('.page').appendChild(el);
+}
+
+function showLose() {
+  document.getElementById('grid').style.display     = 'none';
+  document.getElementById('controls').style.display = 'none';
+  document.getElementById('lives-row').innerHTML    = '';
+
+  // Reveal remaining groups
+  puzzle.groups.forEach((g, gi) => {
+    if (!solved.includes(gi)) addSolvedCard(g, true);
   });
-  document.getElementById('grid').innerHTML = '';
+
+  const el = document.createElement('div');
+  el.className = 'gameover';
+  el.innerHTML = `<div class="emoji">😔</div>
+    <h2>נגמרו הניסיונות</h2>
+    <p>הנה הפתרון המלא:</p>
+    <button class="replay-btn" onclick="newGame()">נסה שוב</button>`;
+  document.querySelector('.page').appendChild(el);
 }
 
-// ══════════════════════════════════════════════
-//  MODAL
-// ══════════════════════════════════════════════
-function showModal(title, body) {
-  document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-body').textContent  = body;
-  document.getElementById('modal-overlay').classList.add('show');
+// ══════════════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════════════
+let toastTimer = null;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-function hideModal() {
-  document.getElementById('modal-overlay').classList.remove('show');
-}
-
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 //  HELPERS
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 function shuffleArr(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -522,13 +491,9 @@ function shuffleArr(arr) {
   }
 }
 
-function setMessage(msg) {
-  document.getElementById('message').textContent = msg;
-}
-
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 //  START
-// ══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
 newGame();
 </script>
 </body>
