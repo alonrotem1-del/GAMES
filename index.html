@@ -25,6 +25,26 @@
     .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
     .header p  { font-size: 13px; color: #8888aa; margin-top: 4px; }
 
+    /* DIFFICULTY LEGEND */
+    .legend {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      color: #8888aa;
+    }
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+    .legend-dot.y { background: #f5c518; }
+    .legend-dot.g { background: #7ec87e; }
+    .legend-dot.b { background: #6fa8dc; }
+    .legend-dot.p { background: #c084e0; }
+
     /* SOLVED GROUPS */
     .solved-groups { margin-bottom: 8px; }
     .solved-card {
@@ -60,12 +80,16 @@
       padding: 4px;
       font-family: inherit;
       line-height: 1.25;
-      transition: background 0.12s, border-color 0.12s, transform 0.12s;
+      transition: background 0.12s, border-color 0.12s, transform 0.12s, box-shadow 0.12s;
       user-select: none;
     }
     .tile:active  { transform: scale(0.93); }
     .tile.sel     { background: #f0f0f8; color: #0f0f13; border-color: #f0f0f8; transform: scale(1.04); }
+    /* FIX: shake class is kept stable — DOM rebuild happens at 500ms (after animation ends at 450ms) */
     .tile.shake   { animation: shake 0.45s ease; }
+    /* Hint highlight — subtle purple glow on hinted tiles */
+    .tile.hinted  { border-color: #6c63ff; box-shadow: 0 0 0 2px rgba(108,99,255,0.25); }
+    .tile.hinted.sel { box-shadow: none; }
 
     /* CONTROLS */
     .controls {
@@ -123,7 +147,6 @@
     .gameover .emoji { font-size: 52px; margin-bottom: 10px; }
     .gameover h2    { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
     .gameover p     { color: #8888aa; font-size: 14px; margin-bottom: 14px; }
-    .gameover .missed { margin-bottom: 14px; }
     .replay-btn {
       background: none;
       border: 1.5px solid #2e2e42;
@@ -191,6 +214,16 @@
     <p>מצא ארבע קבוצות של ארבע מילים</p>
   </div>
 
+  <!-- Difficulty legend -->
+  <div class="legend">
+    <span>קל</span>
+    <span class="legend-dot y"></span>
+    <span class="legend-dot g"></span>
+    <span class="legend-dot b"></span>
+    <span class="legend-dot p"></span>
+    <span>קשה</span>
+  </div>
+
   <div class="solved-groups" id="solved"></div>
   <div class="grid"         id="grid"></div>
 
@@ -208,7 +241,7 @@
 
 <script>
 // ══════════════════════════════════════════════════════════
-//  PUZZLES
+//  PUZZLES  (y=קל → g → b → p=קשה)
 // ══════════════════════════════════════════════════════════
 const PUZZLES = [
   {
@@ -281,21 +314,37 @@ const PUZZLES = [
 //  STATE
 // ══════════════════════════════════════════════════════════
 const MAX_LIVES = 4;
-let puzzle, tiles, selected, solved, lives, hintsLeft, gameOver;
+let puzzle, tiles, selected, solved, lives, hintsLeft, hintedWords, gameOver;
+let lastPuzzleIdx = -1;
 
 function newGame() {
-  puzzle    = PUZZLES[Math.floor(Math.random() * PUZZLES.length)];
-  tiles     = puzzle.groups.flatMap((g, gi) => g.words.map(w => ({ word: w, gi })));
-  shuffleArr(tiles);
-  selected  = [];
-  solved    = [];
-  lives     = MAX_LIVES;
-  hintsLeft = 3;
-  gameOver  = false;
+  // FIX #2: remove any stale gameover divs from previous game
+  document.querySelectorAll('.gameover').forEach(el => el.remove());
 
-  document.getElementById('solved').innerHTML = '';
-  document.getElementById('grid').style.display = 'grid';
+  // FIX: avoid repeating the same puzzle back-to-back
+  let idx;
+  do { idx = Math.floor(Math.random() * PUZZLES.length); }
+  while (idx === lastPuzzleIdx && PUZZLES.length > 1);
+  lastPuzzleIdx = idx;
+  puzzle = PUZZLES[idx];
+
+  tiles      = puzzle.groups.flatMap((g, gi) => g.words.map(w => ({ word: w, gi })));
+  shuffleArr(tiles);
+  selected   = [];
+  solved     = [];
+  lives      = MAX_LIVES;
+  hintsLeft  = 3;
+  hintedWords = new Set();
+  gameOver   = false;
+
+  document.getElementById('solved').innerHTML    = '';
+  document.getElementById('grid').style.display  = 'grid';
   document.getElementById('controls').style.display = 'flex';
+
+  // FIX #3: reset hint button label on new game
+  document.getElementById('btn-hint').innerHTML  = '<span class="ico">💡</span>רמז';
+  document.getElementById('btn-hint').disabled   = false;
+
   renderGrid();
   renderLives();
 }
@@ -309,7 +358,9 @@ function renderGrid() {
 
   tiles.forEach((t, i) => {
     const btn = document.createElement('button');
-    btn.className = 'tile' + (selected.includes(i) ? ' sel' : '');
+    const isSel    = selected.includes(i);
+    const isHinted = hintedWords.has(t.word);
+    btn.className  = 'tile' + (isSel ? ' sel' : '') + (isHinted && !isSel ? ' hinted' : '');
     btn.textContent = t.word;
     btn.addEventListener('click', () => toggleTile(i));
     grid.appendChild(btn);
@@ -369,19 +420,29 @@ function doHint() {
   if (hintsLeft <= 0 || gameOver) return;
   const unsolvedGroups = puzzle.groups.filter((_, gi) => !solved.includes(gi));
   if (!unsolvedGroups.length) return;
+
+  // Pick a random unsolved group, prefer groups with un-hinted words
   const g = unsolvedGroups[Math.floor(Math.random() * unsolvedGroups.length)];
+
+  // FIX: highlight 2 words from the group (visible glow on tiles), not just toast
+  const unhinted = g.words.filter(w => !hintedWords.has(w));
+  const toHint   = unhinted.sort(() => Math.random() - 0.5).slice(0, 2);
+  toHint.forEach(w => hintedWords.add(w));
+
   hintsLeft--;
-  document.getElementById('btn-hint').textContent = '';
+  // FIX #3: update button label with remaining count
   document.getElementById('btn-hint').innerHTML =
     `<span class="ico">💡</span>רמז (${hintsLeft})`;
-  showToast(`רמז: ${g.label}`);
   if (hintsLeft <= 0) document.getElementById('btn-hint').disabled = true;
+
+  showToast(`רמז: ${g.label}`);
+  renderGrid(); // re-render so hinted tiles show the glow
 }
 
 function doSubmit() {
   if (selected.length !== 4 || gameOver) return;
 
-  const giList = selected.map(i => tiles[i].gi);
+  const giList  = selected.map(i => tiles[i].gi);
   const allSame = giList.every(gi => gi === giList[0]);
 
   if (allSame) {
@@ -401,19 +462,16 @@ function doSubmit() {
       setTimeout(() => showWin(), 350);
     }
   } else {
-    // ❌ Wrong
+    // ❌ Wrong — shake then rebuild
     const oneAway = puzzle.groups.some((_, gi) => {
       if (solved.includes(gi)) return false;
       return selected.filter(i => tiles[i].gi === gi).length === 3;
     });
 
-    // Shake selected tiles
+    // Add shake to the selected tiles before clearing selection
     const tileBtns = document.getElementById('grid').querySelectorAll('.tile');
     selected.forEach(i => {
-      if (tileBtns[i]) {
-        tileBtns[i].classList.add('shake');
-        setTimeout(() => tileBtns[i]?.classList.remove('shake'), 500);
-      }
+      if (tileBtns[i]) tileBtns[i].classList.add('shake');
     });
 
     lives--;
@@ -425,9 +483,11 @@ function doSubmit() {
 
     if (lives <= 0) {
       gameOver = true;
-      setTimeout(() => showLose(), 650);
+      // FIX #1: wait for shake animation (450ms) to finish before rebuilding DOM
+      setTimeout(() => showLose(), 500);
     } else {
-      setTimeout(() => renderGrid(), 50);
+      // FIX #1: was 50ms — now 500ms so shake animation completes before DOM rebuild
+      setTimeout(() => renderGrid(), 500);
     }
   }
 }
