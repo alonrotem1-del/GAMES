@@ -85,9 +85,7 @@
     }
     .tile:active  { transform: scale(0.93); }
     .tile.sel     { background: #f0f0f8; color: #0f0f13; border-color: #f0f0f8; transform: scale(1.04); }
-    /* FIX: shake class is kept stable — DOM rebuild happens at 500ms (after animation ends at 450ms) */
     .tile.shake   { animation: shake 0.45s ease; }
-    /* Hint highlight — subtle purple glow on hinted tiles */
     .tile.hinted  { border-color: #6c63ff; box-shadow: 0 0 0 2px rgba(108,99,255,0.25); }
     .tile.hinted.sel { box-shadow: none; }
 
@@ -214,7 +212,6 @@
     <p>מצא ארבע קבוצות של ארבע מילים</p>
   </div>
 
-  <!-- Difficulty legend -->
   <div class="legend">
     <span>קל</span>
     <span class="legend-dot y"></span>
@@ -240,9 +237,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════════════════
-//  PUZZLES  (y=קל → g → b → p=קשה)
-// ══════════════════════════════════════════════════════════
 const PUZZLES = [
   {
     groups: [
@@ -310,24 +304,17 @@ const PUZZLES = [
   },
 ];
 
-// ══════════════════════════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════════════════════════
 const MAX_LIVES = 4;
 let puzzle, tiles, selected, solved, lives, hintsLeft, hintedWords, gameOver;
 let lastPuzzleIdx = -1;
 
 function newGame() {
-  // FIX #2: remove any stale gameover divs from previous game
   document.querySelectorAll('.gameover').forEach(el => el.remove());
-
-  // FIX: avoid repeating the same puzzle back-to-back
   let idx;
   do { idx = Math.floor(Math.random() * PUZZLES.length); }
   while (idx === lastPuzzleIdx && PUZZLES.length > 1);
   lastPuzzleIdx = idx;
   puzzle = PUZZLES[idx];
-
   tiles      = puzzle.groups.flatMap((g, gi) => g.words.map(w => ({ word: w, gi })));
   shuffleArr(tiles);
   selected   = [];
@@ -336,26 +323,18 @@ function newGame() {
   hintsLeft  = 3;
   hintedWords = new Set();
   gameOver   = false;
-
   document.getElementById('solved').innerHTML    = '';
   document.getElementById('grid').style.display  = 'grid';
   document.getElementById('controls').style.display = 'flex';
-
-  // FIX #3: reset hint button label on new game
   document.getElementById('btn-hint').innerHTML  = '<span class="ico">💡</span>רמז';
   document.getElementById('btn-hint').disabled   = false;
-
   renderGrid();
   renderLives();
 }
 
-// ══════════════════════════════════════════════════════════
-//  RENDER
-// ══════════════════════════════════════════════════════════
 function renderGrid() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
-
   tiles.forEach((t, i) => {
     const btn = document.createElement('button');
     const isSel    = selected.includes(i);
@@ -365,7 +344,6 @@ function renderGrid() {
     btn.addEventListener('click', () => toggleTile(i));
     grid.appendChild(btn);
   });
-
   const nSel = selected.length;
   document.getElementById('btn-clear').disabled  = nSel === 0;
   document.getElementById('btn-submit').disabled = nSel !== 4;
@@ -374,7 +352,7 @@ function renderGrid() {
 
 function renderLives() {
   const row = document.getElementById('lives-row');
-  row.innerHTML = `<span class="lives-lbl">ניסיונות:</span>`;
+  row.innerHTML = '<span class="lives-lbl">ניסיונות:</span>';
   for (let i = 0; i < MAX_LIVES; i++) {
     const d = document.createElement('span');
     d.className = 'dot' + (i >= lives ? ' lost' : '');
@@ -384,129 +362,79 @@ function renderLives() {
 
 function addSolvedCard(group, faded) {
   const card = document.createElement('div');
-  card.className = `solved-card ${group.color}`;
+  card.className = 'solved-card ' + group.color;
   if (faded) card.style.opacity = '0.55';
-  card.innerHTML = `<div class="cat">${group.label}</div>
-                    <div class="wrds">${group.words.join(' · ')}</div>`;
+  card.innerHTML = '<div class="cat">' + group.label + '</div><div class="wrds">' + group.words.join(' · ') + '</div>';
   document.getElementById('solved').appendChild(card);
 }
 
-// ══════════════════════════════════════════════════════════
-//  INTERACTIONS
-// ══════════════════════════════════════════════════════════
 function toggleTile(i) {
   if (gameOver) return;
   const idx = selected.indexOf(i);
-  if (idx === -1) {
-    if (selected.length < 4) selected.push(i);
-  } else {
-    selected.splice(idx, 1);
-  }
+  if (idx === -1) { if (selected.length < 4) selected.push(i); }
+  else selected.splice(idx, 1);
   renderGrid();
 }
 
-function doClear() {
-  selected = [];
-  renderGrid();
-}
+function doClear() { selected = []; renderGrid(); }
 
-function doShuffle() {
-  shuffleArr(tiles);
-  selected = [];
-  renderGrid();
-}
+function doShuffle() { shuffleArr(tiles); selected = []; renderGrid(); }
 
 function doHint() {
   if (hintsLeft <= 0 || gameOver) return;
   const unsolvedGroups = puzzle.groups.filter((_, gi) => !solved.includes(gi));
   if (!unsolvedGroups.length) return;
-
-  // Pick a random unsolved group, prefer groups with un-hinted words
   const g = unsolvedGroups[Math.floor(Math.random() * unsolvedGroups.length)];
-
-  // FIX: highlight 2 words from the group (visible glow on tiles), not just toast
   const unhinted = g.words.filter(w => !hintedWords.has(w));
   const toHint   = unhinted.sort(() => Math.random() - 0.5).slice(0, 2);
   toHint.forEach(w => hintedWords.add(w));
-
   hintsLeft--;
-  // FIX #3: update button label with remaining count
-  document.getElementById('btn-hint').innerHTML =
-    `<span class="ico">💡</span>רמז (${hintsLeft})`;
+  document.getElementById('btn-hint').innerHTML = '<span class="ico">💡</span>רמז (' + hintsLeft + ')';
   if (hintsLeft <= 0) document.getElementById('btn-hint').disabled = true;
-
-  showToast(`רמז: ${g.label}`);
-  renderGrid(); // re-render so hinted tiles show the glow
+  showToast('רמז: ' + g.label);
+  renderGrid();
 }
 
 function doSubmit() {
   if (selected.length !== 4 || gameOver) return;
-
   const giList  = selected.map(i => tiles[i].gi);
   const allSame = giList.every(gi => gi === giList[0]);
-
   if (allSame) {
-    // ✅ Correct
     const gi    = giList[0];
     const group = puzzle.groups[gi];
     solved.push(gi);
     addSolvedCard(group, false);
-
     const wordsToRemove = new Set(selected.map(i => tiles[i].word));
     tiles    = tiles.filter(t => !wordsToRemove.has(t.word));
     selected = [];
     renderGrid();
     renderLives();
-
-    if (solved.length === puzzle.groups.length) {
-      setTimeout(() => showWin(), 350);
-    }
+    if (solved.length === puzzle.groups.length) setTimeout(() => showWin(), 350);
   } else {
-    // ❌ Wrong — shake then rebuild
     const oneAway = puzzle.groups.some((_, gi) => {
       if (solved.includes(gi)) return false;
       return selected.filter(i => tiles[i].gi === gi).length === 3;
     });
-
-    // Add shake to the selected tiles before clearing selection
     const tileBtns = document.getElementById('grid').querySelectorAll('.tile');
-    selected.forEach(i => {
-      if (tileBtns[i]) tileBtns[i].classList.add('shake');
-    });
-
+    selected.forEach(i => { if (tileBtns[i]) tileBtns[i].classList.add('shake'); });
     lives--;
     selected = [];
     renderLives();
-
     if (oneAway) showToast('כמעט! רק מילה אחת מפרידה אותך 😅');
     else         showToast('לא נכון, נסה שוב');
-
-    if (lives <= 0) {
-      gameOver = true;
-      // FIX #1: wait for shake animation (450ms) to finish before rebuilding DOM
-      setTimeout(() => showLose(), 500);
-    } else {
-      // FIX #1: was 50ms — now 500ms so shake animation completes before DOM rebuild
-      setTimeout(() => renderGrid(), 500);
-    }
+    if (lives <= 0) { gameOver = true; setTimeout(() => showLose(), 500); }
+    else setTimeout(() => renderGrid(), 500);
   }
 }
 
-// ══════════════════════════════════════════════════════════
-//  END SCREENS
-// ══════════════════════════════════════════════════════════
 function showWin() {
   gameOver = true;
   document.getElementById('grid').style.display     = 'none';
   document.getElementById('controls').style.display = 'none';
   document.getElementById('lives-row').innerHTML    = '';
-
   const el = document.createElement('div');
   el.className = 'gameover';
-  el.innerHTML = `<div class="emoji">🎉</div>
-    <h2>כל הכבוד!</h2>
-    <p>פתרת את כל הקבוצות!</p>
-    <button class="replay-btn" onclick="newGame()">משחק חדש</button>`;
+  el.innerHTML = '<div class="emoji">🎉</div><h2>כל הכבוד!</h2><p>פתרת את כל הקבוצות!</p><button class="replay-btn" onclick="newGame()">משחק חדש</button>';
   document.querySelector('.page').appendChild(el);
 }
 
@@ -514,24 +442,13 @@ function showLose() {
   document.getElementById('grid').style.display     = 'none';
   document.getElementById('controls').style.display = 'none';
   document.getElementById('lives-row').innerHTML    = '';
-
-  // Reveal remaining groups
-  puzzle.groups.forEach((g, gi) => {
-    if (!solved.includes(gi)) addSolvedCard(g, true);
-  });
-
+  puzzle.groups.forEach((g, gi) => { if (!solved.includes(gi)) addSolvedCard(g, true); });
   const el = document.createElement('div');
   el.className = 'gameover';
-  el.innerHTML = `<div class="emoji">😔</div>
-    <h2>נגמרו הניסיונות</h2>
-    <p>הנה הפתרון המלא:</p>
-    <button class="replay-btn" onclick="newGame()">נסה שוב</button>`;
+  el.innerHTML = '<div class="emoji">😔</div><h2>נגמרו הניסיונות</h2><p>הנה הפתרון המלא:</p><button class="replay-btn" onclick="newGame()">נסה שוב</button>';
   document.querySelector('.page').appendChild(el);
 }
 
-// ══════════════════════════════════════════════════════════
-//  TOAST
-// ══════════════════════════════════════════════════════════
 let toastTimer = null;
 function showToast(msg) {
   const t = document.getElementById('toast');
@@ -541,9 +458,6 @@ function showToast(msg) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
 }
 
-// ══════════════════════════════════════════════════════════
-//  HELPERS
-// ══════════════════════════════════════════════════════════
 function shuffleArr(arr) {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -551,9 +465,6 @@ function shuffleArr(arr) {
   }
 }
 
-// ══════════════════════════════════════════════════════════
-//  START
-// ══════════════════════════════════════════════════════════
 newGame();
 </script>
 </body>
