@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>וורדעל</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      background: #0f0f13;
+      color: #f0f0f8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 16px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .page {
+      max-width: 420px;
+      margin: 0 auto;
+      padding: 10px 10px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100dvh;
+    }
+
+    /* HEADER */
+    .header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      border-bottom: 1px solid #2e2e42;
+      padding-bottom: 10px;
+      margin-bottom: 14px;
+    }
+    .header h1 { font-size: 26px; font-weight: 900; letter-spacing: 2px; }
+    .header .sub { font-size: 11px; color: #8888aa; margin-top: 2px; text-align: center; }
+    .header-day {
+      position: absolute;
+      left: 0;
+      font-size: 11px;
+      color: #8888aa;
+    }
+    .header-link {
+      position: absolute;
+      right: 0;
+      font-size: 11px;
+      color: #6c63ff;
+      text-decoration: none;
+      border: 1px solid #6c63ff;
+      border-radius: 8px;
+      padding: 3px 8px;
+    }
+
+    /* GRID */
+    .grid {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin-bottom: 14px;
+    }
+    .grid-row {
+      display: flex;
+      flex-direction: row;
+      gap: 5px;
+    }
+    .cell {
+      width: 56px;
+      height: 56px;
+      border: 2px solid #2e2e42;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 900;
+      color: #f0f0f8;
+      transition: border-color 0.08s;
+      perspective: 250px;
+    }
+    .cell.filled  { border-color: #5a5a7a; }
+    .cell.active  { border-color: #9898b8; }
+    .cell.correct { background: #538d4e; border-color: #538d4e; color: #fff; }
+    .cell.present { background: #b59f3b; border-color: #b59f3b; color: #fff; }
+    .cell.absent  { background: #3a3a4a; border-color: #3a3a4a; color: #ccc; }
+
+    @keyframes pop {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.12); }
+      100% { transform: scale(1); }
+    }
+    .cell.pop { animation: pop 0.1s ease; }
+
+    @keyframes flip {
+      0%   { transform: rotateX(0deg); }
+      50%  { transform: rotateX(-90deg); }
+      100% { transform: rotateX(0deg); }
+    }
+    .cell.flip { animation: flip 0.45s ease forwards; }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%     { transform: translateX(-7px); }
+      40%     { transform: translateX(7px); }
+      60%     { transform: translateX(-4px); }
+      80%     { transform: translateX(4px); }
+    }
+    .grid-row.shake { animation: shake 0.4s ease; }
+
+    @keyframes bounce {
+      0%,100% { transform: translateY(0); }
+      40%     { transform: translateY(-10px); }
+    }
+    .cell.bounce { animation: bounce 0.55s ease; }
+
+    /* KEYBOARD */
+    .keyboard {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .kb-row {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+    }
+    .key {
+      background: #2e2e42;
+      border: none;
+      border-radius: 6px;
+      color: #f0f0f8;
+      font-size: 15px;
+      font-weight: 800;
+      font-family: inherit;
+      height: 52px;
+      min-width: 28px;
+      flex: 1;
+      max-width: 36px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, opacity 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .key.wide    { max-width: 58px; font-size: 13px; }
+    .key.correct { background: #538d4e; color: #fff; }
+    .key.present { background: #b59f3b; color: #fff; }
+    .key.absent  { background: #1c1c2a; color: #555; }
+    .key:active  { opacity: 0.65; }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      top: 68px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-6px);
+      background: #f0f0f8;
+      color: #0f0f13;
+      padding: 9px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      opacity: 0;
+      transition: all 0.2s;
+      z-index: 999;
+      white-space: nowrap;
+      pointer-events: none;
+      max-width: 90vw;
+      text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* MODAL */
+    .modal-bg {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 800;
+      opacity: 0; transition: opacity 0.25s;
+      pointer-events: none;
+    }
+    .modal-bg.show { opacity: 1; pointer-events: all; }
+    .modal {
+      background: #1a1a28;
+      border: 1px solid #2e2e42;
+      border-radius: 16px;
+      padding: 28px 24px;
+      width: 300px;
+      text-align: center;
+    }
+    .modal .emoji  { font-size: 52px; margin-bottom: 10px; }
+    .modal h2      { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+    .modal p       { color: #8888aa; font-size: 14px; margin-bottom: 6px; }
+    .modal .answer { font-size: 26px; font-weight: 900; color: #f0f0f8; margin-bottom: 18px; letter-spacing: 4px; }
+    .modal-btns    { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .modal-btn {
+      background: none;
+      border: 1.5px solid #2e2e42;
+      border-radius: 10px;
+      color: #f0f0f8;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 18px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .modal-btn:hover     { border-color: #8888aa; }
+    .modal-btn.primary   { border-color: #6c63ff; color: #6c63ff; }
+
+    /* SHARE RESULT */
+    .share-grid { font-size: 20px; line-height: 1.4; margin: 14px 0; letter-spacing: 2px; }
+
+    @media (max-width: 360px) {
+      .cell { width: 48px; height: 48px; font-size: 20px; }
+      .key  { height: 46px; font-size: 14px; }
+    }
+    @media (max-height: 680px) {
+      .cell { width: 50px; height: 50px; }
+      .grid { gap: 4px; margin-bottom: 10px; }
+      .keyboard { gap: 4px; }
+      .key { height: 44px; }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <a class="header-link" href="index.html">חיבורי מילים</a>
+    <div>
+      <h1>וורדעל</h1>
+      <div class="sub">נחש את המילה בת 5 האותיות</div>
+    </div>
+    <div class="header-day" id="day-label"></div>
+  </div>
+
+  <div class="grid"     id="grid"></div>
+  <div class="keyboard" id="keyboard"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="modal-bg">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  WORD LIST — 5-letter Hebrew words
+// ══════════════════════════════════════════════════════
+const ANSWERS = [
+  'ישראל','משפחה','מדינה','ילדים','דרכון','ספרים','חברים','עיתון',
+  'טלפון','קדושה','מלכות','ספרות','ערבית','מורים','ארצות','כניסה',
+  'חופשה','מחשבה','תפקיד','תפריט','חינוך','ציבור','תכנית','שיעור',
+  'ממשלה','ביטוח','תשובה','בריאה','תרגום','גרעין','מלאכה','תלמיד',
+  'מנהיג','ספינה','בחירה','שירות','חלוקה','גבורה','לוחות','פירות',
+  'ירקות','חנייה','כתובת','שלטון','מקצוע','עניין','חדשות','נפילה',
+  'שלישי','ראשון','שנייה','קהילה','תאונה','ברכות','מנהרה','ריהוט',
+  'תמונה','אמנות','מורשת','שריפה','כיוון','הסכמה','לחימה','צמיחה',
+  'קליטה','שמירה','מפלגה','שינוי','פתרון','עיצוב','ניגון','חשיבה',
+  'שאיפה','תחרות','שאלות','שלבים','תפילה','אפשרי','הצלחה','חוצפה',
+  'סיפור','שכונה','חיפוש','תגלית','תנועה','פריחה','ברירה','מחלקה',
+  'שונות','ממוצע','אזרחי','ארמון','מתנות','מסורת','פרסום','גלריה',
+  'מינוי','סיכום','דיווח','כלכלה','תוצאה','מדידה','סביבה','דמיון',
+  'מסיבה','כסאות','שולחן','שקיעה','זריחה','ממלכה','קנייה','כלכלי',
+  'קריאה','כתיבה','כוונה','הפסקה','מנוחה','מחנות','ניסוי','נסיון',
+  'מימוש','גדולה','מפורש','שמונה','אחרים','לוטרה','מכונה','מרכזי',
+  'נוסחה','בסיסי','פעולה','תאגיד','גדילה','עמידה','נסיכה','בקשות',
+  'גישור','תוכנה','כשרות','הנהלה','ביצוע','דרישה','תלונה','שלמות',
+  'חולצה','קירות','ידיים','ציפור','חזקים','מצוות','בטחון','דרגות',
+  'צפייה','ממשית','מציאה','תוצרת','כמויות','שרשרת','שריון','מעגלים',
+  'שולטת','מנועים','שרותים','פרסומת','מקצועי','כפריים','חוקרים',
+  'חטיבה','מחזור','מרחבים','לשונות','מכשיר','ניסוח','מפגשים',
+  'מרפאה','כלבים','חתולים','ברווזים','מקלדת','שחמט','ניצחון',
+  'מנצחת','חולים','רופאים','מגרשים','כדורים','חישוב','משחקים',
+  'נגינה','ציורים','פסלים','תיאטרון','שחקנים','תסריט','במאים',
+  'דירות','שכירות','משכנתה','בנייה','שיפוץ','תאורה','ריצוף',
+  'חיפה','ירושלים','תל אביב','נתניה','אשדוד',
+  'מדרכה','רחוב','כיכר','גשרים','מנהרות',
+  'מזרח','מערב','צפון','דרום','מרכז',
+  'קיץ','חורף','אביב','סתיו','שנה',
+  'ינואר','פברואר','מרץ','אפריל','מאי',
+  'ספטמבר','אוקטובר','נובמבר','דצמבר',
+];
+
+// Filter to exactly 5 Hebrew characters
+const WORD_LEN = 5;
+const validAnswers = ANSWERS.filter(w => [...w].length === WORD_LEN);
+
+// ══════════════════════════════════════════════════════
+//  DAILY WORD
+// ══════════════════════════════════════════════════════
+const EPOCH = new Date('2024-01-01').getTime();
+function getTodayIdx() {
+  const today = new Date();
+  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  return Math.floor((d - EPOCH) / 86400000);
+}
+const dayIdx  = getTodayIdx();
+const ANSWER  = validAnswers[dayIdx % validAnswers.length];
+const MAX_ROWS = 6;
+
+// ══════════════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════════════
+let guesses   = [];     // submitted words
+let colors    = [];     // colors[r][c] = 'correct'|'present'|'absent'
+let current   = '';
+let gameOver  = false;
+let revealing = false;
+
+// ══════════════════════════════════════════════════════
+//  SCORING
+// ══════════════════════════════════════════════════════
+function scoreWord(word) {
+  const result = Array(WORD_LEN).fill('absent');
+  const ansArr = [...ANSWER];
+  const wordArr = [...word];
+  const used = Array(WORD_LEN).fill(false);
+
+  // Pass 1: correct
+  for (let i = 0; i < WORD_LEN; i++) {
+    if (wordArr[i] === ansArr[i]) {
+      result[i] = 'correct';
+      used[i] = true;
+    }
+  }
+  // Pass 2: present
+  for (let i = 0; i < WORD_LEN; i++) {
+    if (result[i] === 'correct') continue;
+    for (let j = 0; j < WORD_LEN; j++) {
+      if (!used[j] && wordArr[i] === ansArr[j]) {
+        result[i] = 'present';
+        used[j] = true;
+        break;
+      }
+    }
+  }
+  return result;
+}
+
+// ══════════════════════════════════════════════════════
+//  BUILD DOM
+// ══════════════════════════════════════════════════════
+function buildGrid() {
+  const el = document.getElementById('grid');
+  el.innerHTML = '';
+  for (let r = 0; r < MAX_ROWS; r++) {
+    const row = document.createElement('div');
+    row.className = 'grid-row';
+    row.id = 'row-' + r;
+    for (let c = 0; c < WORD_LEN; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.id = `cell-${r}-${c}`;
+      row.appendChild(cell);
+    }
+    el.appendChild(row);
+  }
+}
+
+const KB_ROWS = [
+  ['א','ב','ג','ד','ה','ו','ז','ח','ט','י'],
+  ['כ','ל','מ','נ','ס','ע','פ','צ','ק','ר'],
+  ['שלח','ש','ת','ך','ף','ן','ם','ץ','⌫'],
+];
+function buildKeyboard() {
+  const el = document.getElementById('keyboard');
+  el.innerHTML = '';
+  KB_ROWS.forEach(row => {
+    const rowEl = document.createElement('div');
+    rowEl.className = 'kb-row';
+    row.forEach(k => {
+      const btn = document.createElement('button');
+      const isWide = k === 'שלח' || k === '⌫';
+      btn.className = 'key' + (isWide ? ' wide' : '');
+      btn.textContent = k;
+      btn.dataset.key = k;
+      btn.addEventListener('click', () => handleKey(k));
+      if (k !== 'שלח' && k !== '⌫') btn.id = 'key-' + k;
+      rowEl.appendChild(btn);
+    });
+    el.appendChild(rowEl);
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════
+function renderGrid() {
+  // Submitted rows
+  for (let r = 0; r < guesses.length; r++) {
+    const word = [...guesses[r]];
+    for (let c = 0; c < WORD_LEN; c++) {
+      const cell = document.getElementById(`cell-${r}-${c}`);
+      cell.textContent = word[c] || '';
+      cell.className   = 'cell ' + (colors[r] ? colors[r][c] : 'filled');
+    }
+  }
+  // Current input row
+  const r = guesses.length;
+  if (r < MAX_ROWS) {
+    const cur = [...current];
+    for (let c = 0; c < WORD_LEN; c++) {
+      const cell = document.getElementById(`cell-${r}-${c}`);
+      cell.textContent = cur[c] || '';
+      if (cur[c]) {
+        cell.className = 'cell filled' + (c === cur.length - 1 ? ' active' : '');
+      } else {
+        cell.className = 'cell' + (c === cur.length ? ' active' : '');
+      }
+    }
+    // Empty rows below
+    for (let rr = r + 1; rr < MAX_ROWS; rr++) {
+      for (let c = 0; c < WORD_LEN; c++) {
+        const cell = document.getElementById(`cell-${rr}-${c}`);
+        cell.textContent = '';
+        cell.className   = 'cell';
+      }
+    }
+  }
+}
+
+function updateKeyboard() {
+  const best = {};
+  guesses.forEach((word, r) => {
+    if (!colors[r]) return;
+    [...word].forEach((letter, c) => {
+      const st = colors[r][c];
+      const prev = best[letter];
+      if (!prev || (st === 'correct') || (st === 'present' && prev === 'absent')) {
+        best[letter] = st;
+      }
+    });
+  });
+  const allLetters = 'אבגדהוזחטיכלמנסעפצקרשתךףןםץ';
+  [...allLetters].forEach(l => {
+    const btn = document.getElementById('key-' + l);
+    if (!btn) return;
+    btn.className = 'key' + (best[l] ? ' ' + best[l] : '');
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  INPUT
+// ══════════════════════════════════════════════════════
+const HEBREW = new Set([...'אבגדהוזחטיכלמנסעפצקרשתךףןםץ']);
+
+function handleKey(k) {
+  if (gameOver || revealing) return;
+  if (k === '⌫') {
+    if (current.length > 0) current = [...current].slice(0, -1).join('');
+    renderGrid();
+    return;
+  }
+  if (k === 'שלח' || k === 'Enter') {
+    submit();
+    return;
+  }
+  if (HEBREW.has(k) && [...current].length < WORD_LEN) {
+    current += k;
+    // Pop animation on new cell
+    const r = guesses.length;
+    const c = [...current].length - 1;
+    const cell = document.getElementById(`cell-${r}-${c}`);
+    if (cell) {
+      cell.classList.remove('pop');
+      void cell.offsetWidth;
+      cell.classList.add('pop');
+    }
+    renderGrid();
+  }
+}
+
+// Physical keyboard (Israeli layout)
+const KEY_MAP = {
+  'e':'ק','r':'ר','t':'א','y':'ט','u':'ו','i':'ן','o':'ם','p':'פ',
+  'a':'ש','s':'ד','d':'ג','f':'כ','g':'ע','h':'י','j':'ח','k':'ל','l':'ך',
+  'z':'ז','x':'ס','c':'ב','v':'ה','b':'נ','n':'מ','m':'צ',
+  ';':'ף',',':'ת','.':'ץ',
+};
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+  if (e.key === 'Backspace') { handleKey('⌫'); return; }
+  if (e.key === 'Enter')     { handleKey('שלח'); return; }
+  if (HEBREW.has(e.key))     { handleKey(e.key); return; }
+  const mapped = KEY_MAP[e.key.toLowerCase()];
+  if (mapped) handleKey(mapped);
+});
+
+// ══════════════════════════════════════════════════════
+//  SUBMIT
+// ══════════════════════════════════════════════════════
+function submit() {
+  if ([...current].length < WORD_LEN) {
+    shakeRow(guesses.length);
+    showToast('המילה חייבת להכיל ' + WORD_LEN + ' אותיות');
+    return;
+  }
+
+  const word  = current;
+  const rowIdx = guesses.length;
+  const score  = scoreWord(word);
+
+  guesses.push(word);
+  current = '';
+  renderGrid();
+
+  revealing = true;
+  revealRow(rowIdx, score, () => {
+    colors[rowIdx] = score;
+    revealing = false;
+    renderGrid();
+    updateKeyboard();
+
+    const won = score.every(s => s === 'correct');
+    if (won) {
+      gameOver = true;
+      bounceRow(rowIdx, () => {
+        const labels = ['מושלם! 🎯','מדהים! 🏆','מעולה! ⭐','יפה מאוד! 🎉','כמעט! 😅','פוף! 😮‍💨'];
+        setTimeout(() => showEndModal(true, labels[rowIdx] || 'כן!!!'), 400);
+      });
+    } else if (guesses.length >= MAX_ROWS) {
+      gameOver = true;
+      setTimeout(() => showEndModal(false), 500);
+    }
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  ANIMATIONS
+// ══════════════════════════════════════════════════════
+function revealRow(rowIdx, score, cb) {
+  const DELAY = 320;
+  for (let c = 0; c < WORD_LEN; c++) {
+    const cell = document.getElementById(`cell-${rowIdx}-${c}`);
+    setTimeout(() => {
+      cell.classList.add('flip');
+      setTimeout(() => {
+        cell.className = 'cell flip ' + score[c];
+      }, 225);
+    }, c * DELAY);
+  }
+  setTimeout(cb, WORD_LEN * DELAY + 200);
+}
+
+function shakeRow(rowIdx) {
+  const row = document.getElementById('row-' + rowIdx);
+  if (!row) return;
+  row.classList.remove('shake');
+  void row.offsetWidth;
+  row.classList.add('shake');
+  setTimeout(() => row.classList.remove('shake'), 500);
+}
+
+function bounceRow(rowIdx, cb) {
+  const DELAY = 90;
+  const cells = document.querySelectorAll(`#row-${rowIdx} .cell`);
+  cells.forEach((cell, i) => {
+    setTimeout(() => {
+      cell.classList.add('bounce');
+      setTimeout(() => cell.classList.remove('bounce'), 700);
+    }, i * DELAY);
+  });
+  setTimeout(cb, cells.length * DELAY + 700);
+}
+
+// ══════════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════════
+let toastTimer;
+function showToast(msg, dur = 2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ══════════════════════════════════════════════════════
+//  END MODAL
+// ══════════════════════════════════════════════════════
+function buildShareGrid() {
+  return guesses.map((_, r) => {
+    const c = colors[r];
+    if (!c) return '';
+    return c.map(s => s === 'correct' ? '🟩' : s === 'present' ? '🟨' : '⬛').join('');
+  }).join('\n');
+}
+
+function showEndModal(won) {
+  const modal = document.getElementById('modal');
+  const attempts = guesses.length;
+  const share = buildShareGrid();
+
+  modal.innerHTML = `
+    <div class="emoji">${won ? '🎉' : '😔'}</div>
+    <h2>${won ? 'כל הכבוד!' : 'אולי בפעם הבאה'}</h2>
+    ${won
+      ? `<p>פתרת ב-${attempts} ניסיון${attempts === 1 ? '' : 'ות'}!</p>`
+      : `<p>המילה הייתה:</p><div class="answer">${ANSWER}</div>`
+    }
+    <div class="share-grid">${share}</div>
+    <div class="modal-btns">
+      <button class="modal-btn primary" onclick="copyShare()">📋 שתף</button>
+      <button class="modal-btn" onclick="closeModal()">סגור</button>
+    </div>
+  `;
+
+  const bg = document.getElementById('modal-bg');
+  bg.classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('show');
+}
+
+window.copyShare = function() {
+  const share = buildShareGrid();
+  const text  = `וורדעל יום ${dayIdx}\n${guesses.length}/${MAX_ROWS}\n\n${share}`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => showToast('הועתק! 👍'));
+  } else {
+    showToast(text, 4000);
+  }
+};
+
+// Close modal on background click
+document.getElementById('modal-bg').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-bg')) closeModal();
+});
+
+// ══════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════
+document.getElementById('day-label').textContent = 'יום ' + (dayIdx + 1);
+
+buildGrid();
+buildKeyboard();
+renderGrid();
+</script>
+</body>
+</html>
