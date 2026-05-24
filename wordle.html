@@ -250,11 +250,7 @@
 </div>
 
 <script>
-// ══════════════════════════════════════════════════════
-//  WORD LIST — 5-letter Hebrew words
-// ══════════════════════════════════════════════════════
 const ANSWERS = [
-  // General / society
   'ישראל','משפחה','מדינה','ילדים','דרכון','ספרים','חברים','עיתון',
   'טלפון','קדושה','מלכות','ספרות','ערבית','מורים','ארצות','כניסה',
   'חופשה','מחשבה','תפקיד','תפריט','חינוך','ציבור','תכנית','שיעור',
@@ -278,79 +274,53 @@ const ANSWERS = [
   'מחזור','מכשיר','ניסוח','מרפאה','כלבים','מקלדת','מנצחת','חולים',
   'חישוב','נגינה','פסלים','תסריט','במאים','דירות','בנייה','שיפוץ',
   'תאורה','ריצוף','נתניה','אשדוד','מדרכה','גשרים','ינואר','אפריל',
-  // Food & drink
   'ארוחה','כריכה','עוגות','בננות','ענבים','שקדים','פיצות','בורקס',
   'פלאפל','חומוס','טחינה','קציצה','גבינה','ביצות','לחמים','תרדים',
   'שתייה','אכילה','כוסות','צלחות','בקבוק',
-  // Animals
   'סוסים','כבשים','ארנבת','נחשים','אריות','דובים','זאבים','פילים',
   'קופים','נשרים','תוכים','ינשוף','חגבים','עכביש','ערמון','צפרדע',
   'נמלים','דבורה','כבשות','פרחים','ורדים',
-  // Nature & weather
   'גבעות','ברקים','רעמים','גשמים','שלגים','רוחות','סופות','חמסין',
   'להבות','גחלים','נהרות','עמקים',
-  // Arts & music
   'כינור','גיטרה','תופים','פסנתר','שירים','לחנים','מחזות','עלילה',
   'אגדות','פיסול','פסלות',
-  // Health
   'רפואה','פציעה','תרופה','כאבים','ריאות','עצמות','מחלים',
-  // Sports
   'גלישה','צלילה','טיפוס','קפיצה','רכיבה','אגרוף','שחייה','ריצות',
-  // Military
   'חיילת','קצינה','לוחמת','גיבור','לוחמה',
-  // Religion & Jewish
   'שבתות','כנסיה','ציצית','פורים','סוכות','שמחות','חגיגה','חתונה',
   'חתנים','רבנות','לוויים','סדרים',
-  // Geography
   'הכרמל','הגליל','השרון','הגולן',
-  // Adjectives & descriptive
   'גבוהה','נמוכה','רחוקה','קרובה','עמוקה','מהירה','איטית','קלילה',
   'נחמדה','נעימה','ידועה','חשובה','מיוחד','מוכשר','מצחיק','ירקרק',
   'כחלחל','אדמדם','שחרחר',
-  // Abstract & emotions
   'אמונה','חירות','צדקות','אהבות','עצבות','הפתעה','ניחוש','תדהמה',
   'השראה','תוחלת',
-  // Verbs (infinitive)
   'לכתוב','לקרוא','לרקוד','לצייר','ללמוד','לחכות','לשחות','לאכול',
   'לשתות','לישון','לחזור','לפתוח','לסגור','לעזור','לקנות','לבנות',
   'לנסוע','לגדול',
-  // Numbers & ordinals
   'שתיים','שלושה','ארבעה','חמישה','חמישי','שביעי','שמיני','תשיעי',
   'עשרות','עשרים','שישים','שבעים','אלפים',
-  // Institutions & education
   'תחנות','רכבות','מסלול','ספריה','מחברת','כיתות','חברות','עבודה',
   'עסקים','תכנון','ייצור','ייצוא','ייבוא','ניהול','שיווק','יחסים',
   'חקיקה','הצבעה','הכרזה','הודעה','פרטים','דוחות','מסקנה','כתבות',
   'ראיון','תחקיר','מזכיר','שגריר','שיחות','מגעים',
-  // Civics & life
   'גלויה','הפגנה','שביתה','בחינה','הוראה','תלמוד','בעלים','אחוזה',
   'שורות','טורים','עגלות','כרטיס','חשבון','תשלום','הנחות','קבלות',
-  // Language
   'מילים','מילות','עברית','רוסית','סינית','יפנית',
-  // Clothing & fashion
   'תכשיט','טבעות','חצאית','שמלות','סוודר','חגורה','כיסים',
-  // Home & objects
   'חדרים','מרפסת','כורסה','מנעול','מזוזה','מנורה','שמיכה','מגבות',
   'כריות','טירות',
-  // Technology
   'שרתים','מדפסת','מסכים','מחשוב','תכנות','ראוטר',
-  // Construction
   'לבנים','רעפים',
-  // Extra nouns
   'בולים','שורים','פנייה','מרידה',
-  // (length filter handles any non-5-char entries)
   'ירושלים','תל אביב','חיפה','רחוב','כיכר','מנהרות','מזרח','מערב',
   'צפון','דרום','מרכז','קיץ','חורף','אביב','סתיו','שנה','פברואר',
   'מרץ','מאי','ספטמבר','אוקטובר','נובמבר','דצמבר',
 ];
 
-// Filter to exactly 5 Hebrew characters
 const WORD_LEN = 5;
 const validAnswers = ANSWERS.filter(w => [...w].length === WORD_LEN);
 
-// ══════════════════════════════════════════════════════
-//  DAILY WORD
-// ══════════════════════════════════════════════════════
 const EPOCH = new Date('2024-01-01').getTime();
 function getTodayIdx() {
   const today = new Date();
@@ -358,51 +328,33 @@ function getTodayIdx() {
   return Math.floor((d - EPOCH) / 86400000);
 }
 const dayIdx  = getTodayIdx();
-const ANSWER  = validAnswers[dayIdx % validAnswers.length];
+let wordOffset = 0;
+let ANSWER  = validAnswers[(dayIdx + wordOffset) % validAnswers.length];
 const MAX_ROWS = 6;
 
-// ══════════════════════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════════════════════
-let guesses   = [];     // submitted words
-let colors    = [];     // colors[r][c] = 'correct'|'present'|'absent'
+let guesses   = [];
+let colors    = [];
 let current   = '';
 let gameOver  = false;
 let revealing = false;
 
-// ══════════════════════════════════════════════════════
-//  SCORING
-// ══════════════════════════════════════════════════════
 function scoreWord(word) {
   const result = Array(WORD_LEN).fill('absent');
   const ansArr = [...ANSWER];
   const wordArr = [...word];
   const used = Array(WORD_LEN).fill(false);
-
-  // Pass 1: correct
   for (let i = 0; i < WORD_LEN; i++) {
-    if (wordArr[i] === ansArr[i]) {
-      result[i] = 'correct';
-      used[i] = true;
-    }
+    if (wordArr[i] === ansArr[i]) { result[i] = 'correct'; used[i] = true; }
   }
-  // Pass 2: present
   for (let i = 0; i < WORD_LEN; i++) {
     if (result[i] === 'correct') continue;
     for (let j = 0; j < WORD_LEN; j++) {
-      if (!used[j] && wordArr[i] === ansArr[j]) {
-        result[i] = 'present';
-        used[j] = true;
-        break;
-      }
+      if (!used[j] && wordArr[i] === ansArr[j]) { result[i] = 'present'; used[j] = true; break; }
     }
   }
   return result;
 }
 
-// ══════════════════════════════════════════════════════
-//  BUILD DOM
-// ══════════════════════════════════════════════════════
 function buildGrid() {
   const el = document.getElementById('grid');
   el.innerHTML = '';
@@ -445,11 +397,7 @@ function buildKeyboard() {
   });
 }
 
-// ══════════════════════════════════════════════════════
-//  RENDER
-// ══════════════════════════════════════════════════════
 function renderGrid() {
-  // Submitted rows
   for (let r = 0; r < guesses.length; r++) {
     const word = [...guesses[r]];
     for (let c = 0; c < WORD_LEN; c++) {
@@ -458,7 +406,6 @@ function renderGrid() {
       cell.className   = 'cell ' + (colors[r] ? colors[r][c] : 'filled');
     }
   }
-  // Current input row
   const r = guesses.length;
   if (r < MAX_ROWS) {
     const cur = [...current];
@@ -471,7 +418,6 @@ function renderGrid() {
         cell.className = 'cell' + (c === cur.length ? ' active' : '');
       }
     }
-    // Empty rows below
     for (let rr = r + 1; rr < MAX_ROWS; rr++) {
       for (let c = 0; c < WORD_LEN; c++) {
         const cell = document.getElementById(`cell-${rr}-${c}`);
@@ -489,9 +435,7 @@ function updateKeyboard() {
     [...word].forEach((letter, c) => {
       const st = colors[r][c];
       const prev = best[letter];
-      if (!prev || (st === 'correct') || (st === 'present' && prev === 'absent')) {
-        best[letter] = st;
-      }
+      if (!prev || (st === 'correct') || (st === 'present' && prev === 'absent')) best[letter] = st;
     });
   });
   const allLetters = 'אבגדהוזחטיכלמנסעפצקרשתךףןםץ';
@@ -502,9 +446,6 @@ function updateKeyboard() {
   });
 }
 
-// ══════════════════════════════════════════════════════
-//  INPUT
-// ══════════════════════════════════════════════════════
 const HEBREW = new Set([...'אבגדהוזחטיכלמנסעפצקרשתךףןםץ']);
 
 function handleKey(k) {
@@ -514,26 +455,17 @@ function handleKey(k) {
     renderGrid();
     return;
   }
-  if (k === 'שלח' || k === 'Enter') {
-    submit();
-    return;
-  }
+  if (k === 'שלח' || k === 'Enter') { submit(); return; }
   if (HEBREW.has(k) && [...current].length < WORD_LEN) {
     current += k;
-    // Pop animation on new cell
     const r = guesses.length;
     const c = [...current].length - 1;
     const cell = document.getElementById(`cell-${r}-${c}`);
-    if (cell) {
-      cell.classList.remove('pop');
-      void cell.offsetWidth;
-      cell.classList.add('pop');
-    }
+    if (cell) { cell.classList.remove('pop'); void cell.offsetWidth; cell.classList.add('pop'); }
     renderGrid();
   }
 }
 
-// Physical keyboard (Israeli layout)
 const KEY_MAP = {
   'e':'ק','r':'ר','t':'א','y':'ט','u':'ו','i':'ן','o':'ם','p':'פ',
   'a':'ש','s':'ד','d':'ג','f':'כ','g':'ע','h':'י','j':'ח','k':'ל','l':'ך',
@@ -549,31 +481,24 @@ document.addEventListener('keydown', e => {
   if (mapped) handleKey(mapped);
 });
 
-// ══════════════════════════════════════════════════════
-//  SUBMIT
-// ══════════════════════════════════════════════════════
 function submit() {
   if ([...current].length < WORD_LEN) {
     shakeRow(guesses.length);
     showToast('המילה חייבת להכיל ' + WORD_LEN + ' אותיות');
     return;
   }
-
-  const word  = current;
+  const word   = current;
   const rowIdx = guesses.length;
   const score  = scoreWord(word);
-
   guesses.push(word);
   current = '';
   renderGrid();
-
   revealing = true;
   revealRow(rowIdx, score, () => {
     colors[rowIdx] = score;
     revealing = false;
     renderGrid();
     updateKeyboard();
-
     const won = score.every(s => s === 'correct');
     if (won) {
       gameOver = true;
@@ -588,18 +513,13 @@ function submit() {
   });
 }
 
-// ══════════════════════════════════════════════════════
-//  ANIMATIONS
-// ══════════════════════════════════════════════════════
 function revealRow(rowIdx, score, cb) {
   const DELAY = 320;
   for (let c = 0; c < WORD_LEN; c++) {
     const cell = document.getElementById(`cell-${rowIdx}-${c}`);
     setTimeout(() => {
       cell.classList.add('flip');
-      setTimeout(() => {
-        cell.className = 'cell flip ' + score[c];
-      }, 225);
+      setTimeout(() => { cell.className = 'cell flip ' + score[c]; }, 225);
     }, c * DELAY);
   }
   setTimeout(cb, WORD_LEN * DELAY + 200);
@@ -626,9 +546,6 @@ function bounceRow(rowIdx, cb) {
   setTimeout(cb, cells.length * DELAY + 700);
 }
 
-// ══════════════════════════════════════════════════════
-//  TOAST
-// ══════════════════════════════════════════════════════
 let toastTimer;
 function showToast(msg, dur = 2200) {
   const t = document.getElementById('toast');
@@ -638,9 +555,6 @@ function showToast(msg, dur = 2200) {
   toastTimer = setTimeout(() => t.classList.remove('show'), dur);
 }
 
-// ══════════════════════════════════════════════════════
-//  END MODAL
-// ══════════════════════════════════════════════════════
 function buildShareGrid() {
   return guesses.map((_, r) => {
     const c = colors[r];
@@ -653,7 +567,6 @@ function showEndModal(won) {
   const modal = document.getElementById('modal');
   const attempts = guesses.length;
   const share = buildShareGrid();
-
   modal.innerHTML = `
     <div class="emoji">${won ? '🎉' : '😔'}</div>
     <h2>${won ? 'כל הכבוד!' : 'אולי בפעם הבאה'}</h2>
@@ -663,18 +576,33 @@ function showEndModal(won) {
     }
     <div class="share-grid">${share}</div>
     <div class="modal-btns">
-      <button class="modal-btn primary" onclick="copyShare()">📋 שתף</button>
+      <button class="modal-btn primary" onclick="nextWord()">▶ מילה הבאה</button>
+      <button class="modal-btn" onclick="copyShare()">📋 שתף</button>
       <button class="modal-btn" onclick="closeModal()">סגור</button>
     </div>
   `;
-
-  const bg = document.getElementById('modal-bg');
-  bg.classList.add('show');
+  document.getElementById('modal-bg').classList.add('show');
 }
 
 function closeModal() {
   document.getElementById('modal-bg').classList.remove('show');
 }
+
+window.nextWord = function() {
+  wordOffset++;
+  ANSWER = validAnswers[(dayIdx + wordOffset) % validAnswers.length];
+  guesses   = [];
+  colors    = [];
+  current   = '';
+  gameOver  = false;
+  revealing = false;
+  closeModal();
+  buildGrid();
+  buildKeyboard();
+  renderGrid();
+  const label = wordOffset > 0 ? `יום ${dayIdx + 1} · מילה ${wordOffset + 1}` : `יום ${dayIdx + 1}`;
+  document.getElementById('day-label').textContent = label;
+};
 
 window.copyShare = function() {
   const share = buildShareGrid();
@@ -686,16 +614,11 @@ window.copyShare = function() {
   }
 };
 
-// Close modal on background click
 document.getElementById('modal-bg').addEventListener('click', e => {
   if (e.target === document.getElementById('modal-bg')) closeModal();
 });
 
-// ══════════════════════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════════════════════
 document.getElementById('day-label').textContent = 'יום ' + (dayIdx + 1);
-
 buildGrid();
 buildKeyboard();
 renderGrid();
