@@ -358,7 +358,8 @@ function getTodayIdx() {
   return Math.floor((d - EPOCH) / 86400000);
 }
 const dayIdx  = getTodayIdx();
-const ANSWER  = validAnswers[dayIdx % validAnswers.length];
+let wordOffset = 0;
+let ANSWER  = validAnswers[(dayIdx + wordOffset) % validAnswers.length];
 const MAX_ROWS = 6;
 
 // ══════════════════════════════════════════════════════
@@ -663,7 +664,8 @@ function showEndModal(won) {
     }
     <div class="share-grid">${share}</div>
     <div class="modal-btns">
-      <button class="modal-btn primary" onclick="copyShare()">📋 שתף</button>
+      <button class="modal-btn primary" onclick="nextWord()">▶ מילה הבאה</button>
+      <button class="modal-btn" onclick="copyShare()">📋 שתף</button>
       <button class="modal-btn" onclick="closeModal()">סגור</button>
     </div>
   `;
@@ -675,6 +677,22 @@ function showEndModal(won) {
 function closeModal() {
   document.getElementById('modal-bg').classList.remove('show');
 }
+
+window.nextWord = function() {
+  wordOffset++;
+  ANSWER = validAnswers[(dayIdx + wordOffset) % validAnswers.length];
+  guesses   = [];
+  colors    = [];
+  current   = '';
+  gameOver  = false;
+  revealing = false;
+  closeModal();
+  buildGrid();
+  buildKeyboard();
+  renderGrid();
+  const label = wordOffset > 0 ? `יום ${dayIdx + 1} · מילה ${wordOffset + 1}` : `יום ${dayIdx + 1}`;
+  document.getElementById('day-label').textContent = label;
+};
 
 window.copyShare = function() {
   const share = buildShareGrid();
