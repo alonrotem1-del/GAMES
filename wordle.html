@@ -148,6 +148,7 @@
       display: flex;
       justify-content: center;
       gap: 4px;
+      direction: ltr;
     }
     .key {
       background: #2e2e42;
@@ -388,7 +389,7 @@ const ANSWERS = [
   'אמונה','חירות','צדקות','אהבות','עצבות','הפתעה','ניחוש','תדהמה',
   'השראה','תוחלת',
   // Verbs (infinitive)
-  'לכתוב','לקרוא','לרקוד','לצייר','ללמוד','לחכות','לשחות','לאכול',
+  'לכתוב','לקרא','לרקוד','לצייר','ללמוד','לחכות','לשחות','לאכול',
   'לשתות','לישון','לחזור','לפתוח','לסגור','לעזור','לקנות','לבנות',
   'לנסוע','לגדול',
   // Numbers & ordinals
@@ -511,23 +512,22 @@ function showUserModal() {
 
   document.getElementById('user-modal-bg').classList.add('show');
 
-  // Focus the input after a short delay (avoids mobile keyboard on load)
   setTimeout(() => {
     const inp = document.getElementById('user-name-input');
     if (inp) inp.focus();
   }, 300);
 
-  // Allow pressing Enter in the input
   setTimeout(() => {
     const inp = document.getElementById('user-name-input');
     if (inp) inp.addEventListener('keydown', e => {
-      if (e.key === 'Enter') startWithNewUser();
+      if (e.key === 'Enter') { e.stopPropagation(); startWithNewUser(); }
     });
   }, 0);
 }
 
 function closeUserModal() {
   document.getElementById('user-modal-bg').classList.remove('show');
+  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
 }
 
 window.selectExistingUser = function(name) {
@@ -628,7 +628,7 @@ function buildGrid() {
   }
 }
 
-// QWERTY Hebrew layout (Standard Israeli), no sofit letters shown
+// QWERTY Hebrew Standard layout, LTR key order (matches physical keyboard left-to-right)
 // Row 1: E=ק R=ר T=א Y=ט U=ו [skip I=ן O=ם sofit] P=פ
 // Row 2: A=ש S=ד D=ג F=כ G=ע H=י J=ח K=ל [skip L=ך ;=ף sofit]
 // Row 3: Z=ז X=ס C=ב V=ה B=נ N=מ M=צ ,=ת [skip .=ץ sofit]
@@ -688,7 +688,7 @@ function renderGrid() {
       } else {
         cell.className = 'cell' + (c === cur.length ? ' active' : '');
       }
-    }
+    }  
     // Empty rows below
     for (let rr = r + 1; rr < MAX_ROWS; rr++) {
       for (let c = 0; c < WORD_LEN; c++) {
@@ -781,8 +781,8 @@ const KEY_MAP = {
 };
 document.addEventListener('keydown', e => {
   if (e.ctrlKey || e.altKey || e.metaKey) return;
-  if (e.key === 'Backspace') { handleKey('⌫'); return; }
-  if (e.key === 'Enter')     { handleKey('שלח'); return; }
+  if (e.key === 'Backspace') { e.preventDefault(); handleKey('⌫'); return; }
+  if (e.key === 'Enter')     { e.preventDefault(); handleKey('שלח'); return; }
   if (HEBREW_ALL.has(e.key)) { handleKey(e.key); return; }
   const mapped = KEY_MAP[e.key.toLowerCase()];
   if (mapped) handleKey(mapped);
