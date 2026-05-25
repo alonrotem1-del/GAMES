@@ -579,12 +579,12 @@ let gameOver  = false;
 let revealing = false;
 
 // ══════════════════════════════════════════════════════
-//  SCORING
+//  SCORING (normalizes sofit ↔ base for comparison)
 // ══════════════════════════════════════════════════════
 function scoreWord(word) {
   const result = Array(WORD_LEN).fill('absent');
-  const ansArr = [...ANSWER];
-  const wordArr = [...word];
+  const ansArr = [...ANSWER].map(normBase);
+  const wordArr = [...word].map(normBase);
   const used = Array(WORD_LEN).fill(false);
 
   // Pass 1: correct
@@ -628,11 +628,21 @@ function buildGrid() {
   }
 }
 
+// QWERTY Hebrew layout (Standard Israeli), no sofit letters shown
+// Row 1: E=ק R=ר T=א Y=ט U=ו [skip I=ן O=ם sofit] P=פ
+// Row 2: A=ש S=ד D=ג F=כ G=ע H=י J=ח K=ל [skip L=ך ;=ף sofit]
+// Row 3: Z=ז X=ס C=ב V=ה B=נ N=מ M=צ ,=ת [skip .=ץ sofit]
 const KB_ROWS = [
-  ['א','ב','ג','ד','ה','ו','ז','ח','ט','י'],
-  ['כ','ל','מ','נ','ס','ע','פ','צ','ק','ר'],
-  ['שלח','ש','ת','ך','ף','ן','ם','ץ','⌫'],
+  ['ק','ר','א','ט','ו','פ'],
+  ['ש','ד','ג','כ','ע','י','ח','ל'],
+  ['שלח','ז','ס','ב','ה','נ','מ','צ','ת','⌫'],
 ];
+
+// Auto-sofit: when a letter is typed at the last position, convert to sofit form
+const SOFIT_MAP = { 'כ':'ך', 'פ':'ף', 'נ':'ן', 'מ':'ם', 'צ':'ץ' };
+// Reverse: normalize sofit to base for keyboard coloring & scoring
+const SOFIT_TO_BASE = { 'ך':'כ', 'ף':'פ', 'ן':'נ', 'ם':'מ', 'ץ':'צ' };
+function normBase(ch) { return SOFIT_TO_BASE[ch] || ch; }
 function buildKeyboard() {
   const el = document.getElementById('keyboard');
   el.innerHTML = '';
@@ -702,18 +712,28 @@ function updateKeyboard() {
       }
     });
   });
-  const allLetters = 'אבגדהוזחטיכלמנסעפצקרשתךףןםץ';
+  // normalize sofit to base before looking up key
+  const bestNorm = {};
+  Object.entries(best).forEach(([l, v]) => {
+    const base = normBase(l);
+    const prev = bestNorm[base];
+    if (!prev || (v === 'correct') || (v === 'present' && prev === 'absent')) bestNorm[base] = v;
+  });
+  const allLetters = 'אבגדהוזחטיכלמנסעפצקרשת';
   [...allLetters].forEach(l => {
     const btn = document.getElementById('key-' + l);
     if (!btn) return;
-    btn.className = 'key' + (best[l] ? ' ' + best[l] : '');
+    btn.className = 'key' + (bestNorm[l] ? ' ' + bestNorm[l] : '');
   });
 }
 
 // ══════════════════════════════════════════════════════
 //  INPUT
 // ══════════════════════════════════════════════════════
-const HEBREW = new Set([...'אבגדהוזחטיכלמנסעפצקרשתךףןםץ']);
+// Accept base Hebrew letters only (sofit handled via auto-conversion)
+const HEBREW = new Set([...'אבגדהוזחטיכלמנסעפצקרשת']);
+// Also accept sofit directly (from physical keyboard) — normalize to base
+const HEBREW_ALL = new Set([...'אבגדהוזחטיכלמנסעפצקרשתךףןםץ']);
 
 function handleKey(k) {
   if (gameOver || revealing) return;
@@ -726,9 +746,14 @@ function handleKey(k) {
     submit();
     return;
   }
-  if (HEBREW.has(k) && [...current].length < WORD_LEN) {
-    current += k;
-    // Pop animation on new cell
+  // Normalize sofit input to base letter first, then auto-convert at last position
+  let letter = normBase(k);
+  if (HEBREW.has(letter) && [...current].length < WORD_LEN) {
+    const pos = [...current].length;
+    if (pos === WORD_LEN - 1 && SOFIT_MAP[letter]) {
+      letter = SOFIT_MAP[letter]; // auto-convert to sofit at last position
+    }
+    current += letter;
     const r = guesses.length;
     const c = [...current].length - 1;
     const cell = document.getElementById(`cell-${r}-${c}`);
@@ -741,18 +766,24 @@ function handleKey(k) {
   }
 }
 
-// Physical keyboard (Israeli layout)
+// Physical keyboard: sofit keys map to their base form (auto-sofit handles conversion)
 const KEY_MAP = {
-  'e':'ק','r':'ר','t':'א','y':'ט','u':'ו','i':'ן','o':'ם','p':'פ',
-  'a':'ש','s':'ד','d':'ג','f':'כ','g':'ע','h':'י','j':'ח','k':'ל','l':'ך',
+  'e':'ק','r':'ר','t':'א','y':'ט','u':'ו',
+  'i':'נ', // I=ן(sofit) → נ base
+  'o':'מ', // O=ם(sofit) → מ base
+  'p':'פ',
+  'a':'ש','s':'ד','d':'ג','f':'כ','g':'ע','h':'י','j':'ח','k':'ל',
+  'l':'כ', // L=ך(sofit) → כ base
+  ';':'פ', // ;=ף(sofit) → פ base
   'z':'ז','x':'ס','c':'ב','v':'ה','b':'נ','n':'מ','m':'צ',
-  ';':'ף',',':'ת','.':'ץ',
+  ',':'ת',
+  '.':'צ', // .=ץ(sofit) → צ base
 };
 document.addEventListener('keydown', e => {
   if (e.ctrlKey || e.altKey || e.metaKey) return;
   if (e.key === 'Backspace') { handleKey('⌫'); return; }
   if (e.key === 'Enter')     { handleKey('שלח'); return; }
-  if (HEBREW.has(e.key))     { handleKey(e.key); return; }
+  if (HEBREW_ALL.has(e.key)) { handleKey(e.key); return; }
   const mapped = KEY_MAP[e.key.toLowerCase()];
   if (mapped) handleKey(mapped);
 });
