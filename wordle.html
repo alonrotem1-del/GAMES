@@ -688,7 +688,7 @@ function renderGrid() {
       } else {
         cell.className = 'cell' + (c === cur.length ? ' active' : '');
       }
-    }  
+    }
     // Empty rows below
     for (let rr = r + 1; rr < MAX_ROWS; rr++) {
       for (let c = 0; c < WORD_LEN; c++) {
@@ -912,7 +912,7 @@ function showEndModal(won) {
     <div class="emoji">${won ? '🎉' : '😔'}</div>
     <h2>${won ? 'כל הכבוד!' : 'אולי בפעם הבאה'}</h2>
     ${won
-      ? `<p>פתרת ב-${attempts} ניסיון${attempts === 1 ? '' : 'ות'}!</p>`
+      ? `<p>פתרת ב-${attempts} נסיון${attempts === 1 ? '' : 'ות'}!</p>`
       : `<p>המילה הייתה:</p><div class="answer">${ANSWER}</div>`
     }
     <div class="share-grid">${share}</div>
