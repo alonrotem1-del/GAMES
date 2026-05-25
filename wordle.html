@@ -148,6 +148,7 @@
       display: flex;
       justify-content: center;
       gap: 4px;
+      direction: ltr;
     }
     .key {
       background: #2e2e42;
@@ -521,13 +522,14 @@ function showUserModal() {
   setTimeout(() => {
     const inp = document.getElementById('user-name-input');
     if (inp) inp.addEventListener('keydown', e => {
-      if (e.key === 'Enter') startWithNewUser();
+      if (e.key === 'Enter') { e.stopPropagation(); startWithNewUser(); }
     });
   }, 0);
 }
 
 function closeUserModal() {
   document.getElementById('user-modal-bg').classList.remove('show');
+  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
 }
 
 window.selectExistingUser = function(name) {
@@ -781,8 +783,8 @@ const KEY_MAP = {
 };
 document.addEventListener('keydown', e => {
   if (e.ctrlKey || e.altKey || e.metaKey) return;
-  if (e.key === 'Backspace') { handleKey('⌫'); return; }
-  if (e.key === 'Enter')     { handleKey('שלח'); return; }
+  if (e.key === 'Backspace') { e.preventDefault(); handleKey('⌫'); return; }
+  if (e.key === 'Enter')     { e.preventDefault(); handleKey('שלח'); return; }
   if (HEBREW_ALL.has(e.key)) { handleKey(e.key); return; }
   const mapped = KEY_MAP[e.key.toLowerCase()];
   if (mapped) handleKey(mapped);
