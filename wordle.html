@@ -993,22 +993,29 @@ function playFartSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const sr = ctx.sampleRate;
-    const dur = 0.55;
-    const buf = ctx.createBuffer(1, sr * dur, sr);
+    const dur = 0.5;
+    const buf = ctx.createBuffer(1, Math.floor(sr * dur), sr);
     const d = buf.getChannelData(0);
     for (let i = 0; i < d.length; i++) {
       const t = i / sr;
-      const env = Math.exp(-t * 7) * (1 - Math.exp(-t * 50));
-      const flutter = Math.sin(2 * Math.PI * (28 - 18 * t) * t);
-      const noise = (Math.random() * 2 - 1);
-      d[i] = (noise * 0.65 + flutter * 0.35) * env;
+      // Envelope: sharp attack, exponential decay
+      const env = Math.exp(-t * 6) * (1 - Math.exp(-t * 120));
+      // Frequency sweeps 50 Hz → 18 Hz (lips flapping sound)
+      // Phase = 2π ∫f(t)dt = 2π*(50t - 16*t²/dur)
+      const phase = 2 * Math.PI * (50 * t - 16 * t * t / dur);
+      // Square wave (clipped sine) — the "brrp" vibration character
+      const buzz = Math.sign(Math.sin(phase));
+      // Small noise layer for texture
+      const noise = (Math.random() * 2 - 1) * 0.15;
+      d[i] = (buzz * 0.85 + noise) * env * 0.9;
     }
     const src = ctx.createBufferSource();
     src.buffer = buf;
+    // Low-pass to remove buzz harshness above ~350 Hz
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
-    lp.frequency.value = 320;
-    lp.Q.value = 3;
+    lp.frequency.value = 350;
+    lp.Q.value = 0.8;
     src.connect(lp);
     lp.connect(ctx.destination);
     src.start();
