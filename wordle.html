@@ -389,7 +389,7 @@ const ANSWERS = [
   'אמונה','חירות','צדקות','אהבות','עצבות','הפתעה','ניחוש','תדהמה',
   'השראה','תוחלת',
   // Verbs (infinitive)
-  'לכתוב','לקרא','לרקוד','לצייר','ללמוד','לחכות','לשחות','לאכול',
+  'לכתוב','לקרוא','לרקוד','לצייר','ללמוד','לחכות','לשחות','לאכול',
   'לשתות','לישון','לחזור','לפתוח','לסגור','לעזור','לקנות','לבנות',
   'לנסוע','לגדול',
   // Numbers & ordinals
@@ -416,6 +416,26 @@ const ANSWERS = [
   'לבנים','רעפים',
   // Extra nouns
   'בולים','מסלול','שורים','טורים','פנייה','מרידה','הכרזה',
+  // Colors
+  'אדומה','כחולה','ירוקה','צהובה','שחורה','ורודה','כסופה','זהובה','שקופה',
+  // Family & people
+  'אמהות','אבהות','זקנים','נכדים','אחיות','שכנים','אנשים','גברים','ילדות',
+  // Verbs (5-letter)
+  'לצחוק','לבכות','לנגוע','לעלות','לנסות','לאהוב','לחיות','לגמור','לנהוג',
+  'לשמוע','לדאוג','לכעוס','לרצות','לחפור','לשמור','לשאול','לשנות',
+  // Nature & geography
+  'שדרות','כנפים','צמחים','פסגות','מדברה','אגמות','נהרים','אגמים','כפרים','עיירה',
+  // Objects & home
+  'חדרים','דרכים','חיצים','קופסה','שקיות','נעלים','גרבים','בגדים','כפתור',
+  'מסגרת','אגרטל','פנסים',
+  // Food & drink
+  'מרקים','שניצל','גלידה','בצלים','שומים','קישוא','סלטים','תבשיל','פסטות','דבשים','תבלין',
+  // Culture & arts
+  'מנגינה','קצבים','זמרים','אמנים','תיקים','פרסים','אבנים','מתכות',
+  // Tech
+  'מצלמה','קבצים',
+  // Time
+  'שניות',
   // (length filter handles any non-5-char entries)
   'ירושלים','תל אביב','חיפה','רחוב','כיכר','מנהרות','מזרח','מערב',
   'צפון','דרום','מרכז','קיץ','חורף','אביב','סתיו','שנה','פברואר',
@@ -494,7 +514,7 @@ function showUserModal() {
     existingHtml = `
       <div style="font-size:13px;color:#8888aa;margin-bottom:8px;direction:rtl;">משתמשים קיימים:</div>
       <div class="existing-users">
-        ${names.map(n => `<button class="existing-user-btn" onclick="selectExistingUser('${n.replace(/'/g, "\\'")}')">  ${n}</button>`).join('')}
+        ${names.map(n => `<button class="existing-user-btn" onclick="selectExistingUser('${n.replace(/'/g, "\\'")}')">${n}</button>`).join('')}
       </div>
     `;
   }
@@ -512,11 +532,13 @@ function showUserModal() {
 
   document.getElementById('user-modal-bg').classList.add('show');
 
+  // Focus the input after a short delay (avoids mobile keyboard on load)
   setTimeout(() => {
     const inp = document.getElementById('user-name-input');
     if (inp) inp.focus();
   }, 300);
 
+  // Allow pressing Enter in the input
   setTimeout(() => {
     const inp = document.getElementById('user-name-input');
     if (inp) inp.addEventListener('keydown', e => {
@@ -628,7 +650,7 @@ function buildGrid() {
   }
 }
 
-// QWERTY Hebrew Standard layout, LTR key order (matches physical keyboard left-to-right)
+// QWERTY Hebrew layout (Standard Israeli), no sofit letters shown
 // Row 1: E=ק R=ר T=א Y=ט U=ו [skip I=ן O=ם sofit] P=פ
 // Row 2: A=ש S=ד D=ג F=כ G=ע H=י J=ח K=ל [skip L=ך ;=ף sofit]
 // Row 3: Z=ז X=ס C=ב V=ה B=נ N=מ M=צ ,=ת [skip .=ץ sofit]
@@ -813,6 +835,8 @@ function submit() {
     renderGrid();
     updateKeyboard();
 
+    if (!score.some(s => s === 'correct')) playFartSound();
+
     const won = score.every(s => s === 'correct');
     if (won) {
       gameOver = true;
@@ -961,6 +985,36 @@ window.copyShare = function() {
 document.getElementById('modal-bg').addEventListener('click', e => {
   if (e.target === document.getElementById('modal-bg')) closeModal();
 });
+
+// ══════════════════════════════════════════════════════
+//  FART SOUND — plays when no correct (green) letters
+// ══════════════════════════════════════════════════════
+function playFartSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const sr = ctx.sampleRate;
+    const dur = 0.55;
+    const buf = ctx.createBuffer(1, sr * dur, sr);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) {
+      const t = i / sr;
+      const env = Math.exp(-t * 7) * (1 - Math.exp(-t * 50));
+      const flutter = Math.sin(2 * Math.PI * (28 - 18 * t) * t);
+      const noise = (Math.random() * 2 - 1);
+      d[i] = (noise * 0.65 + flutter * 0.35) * env;
+    }
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const lp = ctx.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.value = 320;
+    lp.Q.value = 3;
+    src.connect(lp);
+    lp.connect(ctx.destination);
+    src.start();
+    setTimeout(() => ctx.close(), 2000);
+  } catch (e) {}
+}
 
 // ══════════════════════════════════════════════════════
 //  INIT
