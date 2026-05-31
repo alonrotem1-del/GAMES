@@ -491,8 +491,7 @@ function getUserStats(name) {
 }
 function updateHeaderStats() {
   const user = getCurrentUser();
-  const label = wordOffset > 0 ? `יום ${dayIdx + 1} · מילה ${wordOffset + 1}` : `יום ${dayIdx + 1}`;
-  document.getElementById('day-line1').textContent = label;
+  document.getElementById('day-line1').textContent = `משחק ${gameCount}`;
   if (user) {
     const stats = getUserStats(user);
     const avgText = stats ? `ממוצע ${stats.avg}` : '';
@@ -578,17 +577,18 @@ document.getElementById('switch-user-btn').addEventListener('click', () => {
 });
 
 // ══════════════════════════════════════════════════════
-//  DAILY WORD
+//  RANDOM WORD
 // ══════════════════════════════════════════════════════
-const EPOCH = new Date('2024-01-01').getTime();
-function getTodayIdx() {
-  const today = new Date();
-  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  return Math.floor((d - EPOCH) / 86400000);
+let gameCount = 1;
+let lastAnswer = null;
+function pickRandomAnswer() {
+  let pick;
+  do { pick = validAnswers[Math.floor(Math.random() * validAnswers.length)]; }
+  while (pick === lastAnswer && validAnswers.length > 1);
+  lastAnswer = pick;
+  return pick;
 }
-const dayIdx  = getTodayIdx();
-let wordOffset = 0;
-let ANSWER  = validAnswers[(dayIdx + wordOffset) % validAnswers.length];
+let ANSWER = pickRandomAnswer();
 const MAX_ROWS = 6;
 
 // ══════════════════════════════════════════════════════
@@ -942,7 +942,7 @@ function showEndModal(won) {
     <div class="share-grid">${share}</div>
     ${statsHtml}
     <div class="modal-btns">
-      <button class="modal-btn primary" onclick="nextWord()">▶ מילה הבאה</button>
+      <button class="modal-btn primary" onclick="nextWord()">▶ משחק חדש</button>
       <button class="modal-btn" onclick="copyShare()">📋 שתף</button>
       <button class="modal-btn" onclick="closeModal()">סגור</button>
     </div>
@@ -957,8 +957,8 @@ function closeModal() {
 }
 
 window.nextWord = function() {
-  wordOffset++;
-  ANSWER = validAnswers[(dayIdx + wordOffset) % validAnswers.length];
+  gameCount++;
+  ANSWER = pickRandomAnswer();
   guesses   = [];
   colors    = [];
   current   = '';
@@ -973,7 +973,7 @@ window.nextWord = function() {
 
 window.copyShare = function() {
   const share = buildShareGrid();
-  const text  = `וורדעל יום ${dayIdx}\n${guesses.length}/${MAX_ROWS}\n\n${share}`;
+  const text  = `וורדעל\n${guesses.length}/${MAX_ROWS}\n\n${share}`;
   if (navigator.clipboard) {
     navigator.clipboard.writeText(text).then(() => showToast('הועתק! 👍'));
   } else {
