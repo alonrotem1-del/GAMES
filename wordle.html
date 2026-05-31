@@ -491,8 +491,7 @@ function getUserStats(name) {
 }
 function updateHeaderStats() {
   const user = getCurrentUser();
-  const label = wordOffset > 0 ? `יום ${dayIdx + 1} · מילה ${wordOffset + 1}` : `יום ${dayIdx + 1}`;
-  document.getElementById('day-line1').textContent = label;
+  document.getElementById('day-line1').textContent = `משחק ${gameCount}`;
   if (user) {
     const stats = getUserStats(user);
     const avgText = stats ? `ממוצע ${stats.avg}` : '';
@@ -532,13 +531,11 @@ function showUserModal() {
 
   document.getElementById('user-modal-bg').classList.add('show');
 
-  // Focus the input after a short delay (avoids mobile keyboard on load)
   setTimeout(() => {
     const inp = document.getElementById('user-name-input');
     if (inp) inp.focus();
   }, 300);
 
-  // Allow pressing Enter in the input
   setTimeout(() => {
     const inp = document.getElementById('user-name-input');
     if (inp) inp.addEventListener('keydown', e => {
@@ -578,24 +575,25 @@ document.getElementById('switch-user-btn').addEventListener('click', () => {
 });
 
 // ══════════════════════════════════════════════════════
-//  DAILY WORD
+//  RANDOM WORD
 // ══════════════════════════════════════════════════════
-const EPOCH = new Date('2024-01-01').getTime();
-function getTodayIdx() {
-  const today = new Date();
-  const d = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
-  return Math.floor((d - EPOCH) / 86400000);
+let gameCount = 1;
+let lastAnswer = null;
+function pickRandomAnswer() {
+  let pick;
+  do { pick = validAnswers[Math.floor(Math.random() * validAnswers.length)]; }
+  while (pick === lastAnswer && validAnswers.length > 1);
+  lastAnswer = pick;
+  return pick;
 }
-const dayIdx  = getTodayIdx();
-let wordOffset = 0;
-let ANSWER  = validAnswers[(dayIdx + wordOffset) % validAnswers.length];
+let ANSWER = pickRandomAnswer();
 const MAX_ROWS = 6;
 
 // ══════════════════════════════════════════════════════
 //  STATE
 // ══════════════════════════════════════════════════════
-let guesses   = [];     // submitted words
-let colors    = [];     // colors[r][c] = 'correct'|'present'|'absent'
+let guesses   = [];
+let colors    = [];
 let current   = '';
 let gameOver  = false;
 let revealing = false;
@@ -608,23 +606,13 @@ function scoreWord(word) {
   const ansArr = [...ANSWER].map(normBase);
   const wordArr = [...word].map(normBase);
   const used = Array(WORD_LEN).fill(false);
-
-  // Pass 1: correct
   for (let i = 0; i < WORD_LEN; i++) {
-    if (wordArr[i] === ansArr[i]) {
-      result[i] = 'correct';
-      used[i] = true;
-    }
+    if (wordArr[i] === ansArr[i]) { result[i] = 'correct'; used[i] = true; }
   }
-  // Pass 2: present
   for (let i = 0; i < WORD_LEN; i++) {
     if (result[i] === 'correct') continue;
     for (let j = 0; j < WORD_LEN; j++) {
-      if (!used[j] && wordArr[i] === ansArr[j]) {
-        result[i] = 'present';
-        used[j] = true;
-        break;
-      }
+      if (!used[j] && wordArr[i] === ansArr[j]) { result[i] = 'present'; used[j] = true; break; }
     }
   }
   return result;
@@ -650,19 +638,13 @@ function buildGrid() {
   }
 }
 
-// QWERTY Hebrew layout (Standard Israeli), no sofit letters shown
-// Row 1: E=ק R=ר T=א Y=ט U=ו [skip I=ן O=ם sofit] P=פ
-// Row 2: A=ש S=ד D=ג F=כ G=ע H=י J=ח K=ל [skip L=ך ;=ף sofit]
-// Row 3: Z=ז X=ס C=ב V=ה B=נ N=מ M=צ ,=ת [skip .=ץ sofit]
 const KB_ROWS = [
   ['ק','ר','א','ט','ו','פ'],
   ['ש','ד','ג','כ','ע','י','ח','ל'],
   ['שלח','ז','ס','ב','ה','נ','מ','צ','ת','⌫'],
 ];
 
-// Auto-sofit: when a letter is typed at the last position, convert to sofit form
 const SOFIT_MAP = { 'כ':'ך', 'פ':'ף', 'נ':'ן', 'מ':'ם', 'צ':'ץ' };
-// Reverse: normalize sofit to base for keyboard coloring & scoring
 const SOFIT_TO_BASE = { 'ך':'כ', 'ף':'פ', 'ן':'נ', 'ם':'מ', 'ץ':'צ' };
 function normBase(ch) { return SOFIT_TO_BASE[ch] || ch; }
 function buildKeyboard() {
@@ -689,7 +671,6 @@ function buildKeyboard() {
 //  RENDER
 // ══════════════════════════════════════════════════════
 function renderGrid() {
-  // Submitted rows
   for (let r = 0; r < guesses.length; r++) {
     const word = [...guesses[r]];
     for (let c = 0; c < WORD_LEN; c++) {
@@ -698,7 +679,6 @@ function renderGrid() {
       cell.className   = 'cell ' + (colors[r] ? colors[r][c] : 'filled');
     }
   }
-  // Current input row
   const r = guesses.length;
   if (r < MAX_ROWS) {
     const cur = [...current];
@@ -711,7 +691,6 @@ function renderGrid() {
         cell.className = 'cell' + (c === cur.length ? ' active' : '');
       }
     }
-    // Empty rows below
     for (let rr = r + 1; rr < MAX_ROWS; rr++) {
       for (let c = 0; c < WORD_LEN; c++) {
         const cell = document.getElementById(`cell-${rr}-${c}`);
@@ -729,12 +708,9 @@ function updateKeyboard() {
     [...word].forEach((letter, c) => {
       const st = colors[r][c];
       const prev = best[letter];
-      if (!prev || (st === 'correct') || (st === 'present' && prev === 'absent')) {
-        best[letter] = st;
-      }
+      if (!prev || (st === 'correct') || (st === 'present' && prev === 'absent')) best[letter] = st;
     });
   });
-  // normalize sofit to base before looking up key
   const bestNorm = {};
   Object.entries(best).forEach(([l, v]) => {
     const base = normBase(l);
@@ -752,9 +728,7 @@ function updateKeyboard() {
 // ══════════════════════════════════════════════════════
 //  INPUT
 // ══════════════════════════════════════════════════════
-// Accept base Hebrew letters only (sofit handled via auto-conversion)
 const HEBREW = new Set([...'אבגדהוזחטיכלמנסעפצקרשת']);
-// Also accept sofit directly (from physical keyboard) — normalize to base
 const HEBREW_ALL = new Set([...'אבגדהוזחטיכלמנסעפצקרשתךףןםץ']);
 
 function handleKey(k) {
@@ -764,42 +738,24 @@ function handleKey(k) {
     renderGrid();
     return;
   }
-  if (k === 'שלח' || k === 'Enter') {
-    submit();
-    return;
-  }
-  // Normalize sofit input to base letter first, then auto-convert at last position
+  if (k === 'שלח' || k === 'Enter') { submit(); return; }
   let letter = normBase(k);
   if (HEBREW.has(letter) && [...current].length < WORD_LEN) {
     const pos = [...current].length;
-    if (pos === WORD_LEN - 1 && SOFIT_MAP[letter]) {
-      letter = SOFIT_MAP[letter]; // auto-convert to sofit at last position
-    }
+    if (pos === WORD_LEN - 1 && SOFIT_MAP[letter]) letter = SOFIT_MAP[letter];
     current += letter;
     const r = guesses.length;
     const c = [...current].length - 1;
     const cell = document.getElementById(`cell-${r}-${c}`);
-    if (cell) {
-      cell.classList.remove('pop');
-      void cell.offsetWidth;
-      cell.classList.add('pop');
-    }
+    if (cell) { cell.classList.remove('pop'); void cell.offsetWidth; cell.classList.add('pop'); }
     renderGrid();
   }
 }
 
-// Physical keyboard: sofit keys map to their base form (auto-sofit handles conversion)
 const KEY_MAP = {
-  'e':'ק','r':'ר','t':'א','y':'ט','u':'ו',
-  'i':'נ', // I=ן(sofit) → נ base
-  'o':'מ', // O=ם(sofit) → מ base
-  'p':'פ',
-  'a':'ש','s':'ד','d':'ג','f':'כ','g':'ע','h':'י','j':'ח','k':'ל',
-  'l':'כ', // L=ך(sofit) → כ base
-  ';':'פ', // ;=ף(sofit) → פ base
-  'z':'ז','x':'ס','c':'ב','v':'ה','b':'נ','n':'מ','m':'צ',
-  ',':'ת',
-  '.':'צ', // .=ץ(sofit) → צ base
+  'e':'ק','r':'ר','t':'א','y':'ט','u':'ו','i':'נ','o':'מ','p':'פ',
+  'a':'ש','s':'ד','d':'ג','f':'כ','g':'ע','h':'י','j':'ח','k':'ל','l':'כ',';':'פ',
+  'z':'ז','x':'ס','c':'ב','v':'ה','b':'נ','n':'מ','m':'צ',',':'ת','.':'צ',
 };
 document.addEventListener('keydown', e => {
   if (e.ctrlKey || e.altKey || e.metaKey) return;
@@ -819,24 +775,19 @@ function submit() {
     showToast('המילה חייבת להכיל ' + WORD_LEN + ' אותיות');
     return;
   }
-
   const word  = current;
   const rowIdx = guesses.length;
   const score  = scoreWord(word);
-
   guesses.push(word);
   current = '';
   renderGrid();
-
   revealing = true;
   revealRow(rowIdx, score, () => {
     colors[rowIdx] = score;
     revealing = false;
     renderGrid();
     updateKeyboard();
-
     if (!score.some(s => s === 'correct')) playFartSound();
-
     const won = score.every(s => s === 'correct');
     if (won) {
       gameOver = true;
@@ -860,9 +811,7 @@ function revealRow(rowIdx, score, cb) {
     const cell = document.getElementById(`cell-${rowIdx}-${c}`);
     setTimeout(() => {
       cell.classList.add('flip');
-      setTimeout(() => {
-        cell.className = 'cell flip ' + score[c];
-      }, 225);
+      setTimeout(() => { cell.className = 'cell flip ' + score[c]; }, 225);
     }, c * DELAY);
   }
   setTimeout(cb, WORD_LEN * DELAY + 200);
@@ -913,25 +862,18 @@ function buildShareGrid() {
 }
 
 function showEndModal(won) {
-  // Record the result
   const scoreToRecord = won ? guesses.length : (MAX_ROWS + 1);
   recordGameResult(scoreToRecord);
   updateHeaderStats();
-
   const modal = document.getElementById('modal');
   const attempts = guesses.length;
   const share = buildShareGrid();
-
-  // Build stats line
   const user = getCurrentUser();
   let statsHtml = '';
   if (user) {
     const stats = getUserStats(user);
-    if (stats) {
-      statsHtml = `<div class="stats-line">סה״כ משחקים: ${stats.total} | ממוצע: ${stats.avg} | ניצחונות: ${stats.wins}/${stats.total}</div>`;
-    }
+    if (stats) statsHtml = `<div class="stats-line">סה״כ משחקים: ${stats.total} | ממוצע: ${stats.avg} | ניצחונות: ${stats.wins}/${stats.total}</div>`;
   }
-
   modal.innerHTML = `
     <div class="emoji">${won ? '🎉' : '😔'}</div>
     <h2>${won ? 'כל הכבוד!' : 'אולי בפעם הבאה'}</h2>
@@ -942,14 +884,12 @@ function showEndModal(won) {
     <div class="share-grid">${share}</div>
     ${statsHtml}
     <div class="modal-btns">
-      <button class="modal-btn primary" onclick="nextWord()">▶ מילה הבאה</button>
+      <button class="modal-btn primary" onclick="nextWord()">▶ משחק חדש</button>
       <button class="modal-btn" onclick="copyShare()">📋 שתף</button>
       <button class="modal-btn" onclick="closeModal()">סגור</button>
     </div>
   `;
-
-  const bg = document.getElementById('modal-bg');
-  bg.classList.add('show');
+  document.getElementById('modal-bg').classList.add('show');
 }
 
 function closeModal() {
@@ -957,8 +897,8 @@ function closeModal() {
 }
 
 window.nextWord = function() {
-  wordOffset++;
-  ANSWER = validAnswers[(dayIdx + wordOffset) % validAnswers.length];
+  gameCount++;
+  ANSWER = pickRandomAnswer();
   guesses   = [];
   colors    = [];
   current   = '';
@@ -973,7 +913,7 @@ window.nextWord = function() {
 
 window.copyShare = function() {
   const share = buildShareGrid();
-  const text  = `וורדעל יום ${dayIdx}\n${guesses.length}/${MAX_ROWS}\n\n${share}`;
+  const text  = `וורדעל\n${guesses.length}/${MAX_ROWS}\n\n${share}`;
   if (navigator.clipboard) {
     navigator.clipboard.writeText(text).then(() => showToast('הועתק! 👍'));
   } else {
@@ -981,7 +921,6 @@ window.copyShare = function() {
   }
 };
 
-// Close modal on background click
 document.getElementById('modal-bg').addEventListener('click', e => {
   if (e.target === document.getElementById('modal-bg')) closeModal();
 });
@@ -993,22 +932,23 @@ function playFartSound() {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const sr = ctx.sampleRate;
-    const dur = 0.55;
-    const buf = ctx.createBuffer(1, sr * dur, sr);
+    const dur = 0.5;
+    const buf = ctx.createBuffer(1, Math.floor(sr * dur), sr);
     const d = buf.getChannelData(0);
     for (let i = 0; i < d.length; i++) {
       const t = i / sr;
-      const env = Math.exp(-t * 7) * (1 - Math.exp(-t * 50));
-      const flutter = Math.sin(2 * Math.PI * (28 - 18 * t) * t);
-      const noise = (Math.random() * 2 - 1);
-      d[i] = (noise * 0.65 + flutter * 0.35) * env;
+      const env = Math.exp(-t * 6) * (1 - Math.exp(-t * 120));
+      const phase = 2 * Math.PI * (50 * t - 16 * t * t / dur);
+      const buzz = Math.sign(Math.sin(phase));
+      const noise = (Math.random() * 2 - 1) * 0.15;
+      d[i] = (buzz * 0.85 + noise) * env * 0.9;
     }
     const src = ctx.createBufferSource();
     src.buffer = buf;
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
-    lp.frequency.value = 320;
-    lp.Q.value = 3;
+    lp.frequency.value = 350;
+    lp.Q.value = 0.8;
     src.connect(lp);
     lp.connect(ctx.destination);
     src.start();
@@ -1024,7 +964,6 @@ buildKeyboard();
 renderGrid();
 updateHeaderStats();
 
-// Show user modal on load if no current user
 if (!getCurrentUser()) {
   showUserModal();
 }
